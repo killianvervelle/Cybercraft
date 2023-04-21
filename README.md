@@ -3,13 +3,15 @@ Contexte:
 Il existe à ce jour plusieurs sites de configuration sur mesure d'ordinateurs et de benchmark de leurs composants. Les données sur lesquelles reposent ces services ne sont pas toujours mises à jour en temps réel ce qui va à l'encontre même de la pertinance de leurs recommendations aux utilisateurs. Notre API permettra de répondre aux mêmes besoins utilisateur de manière centralisée et au travers d'une interface utilisateur simplifiée, tout en garantissant l'exactitude et l'exaustivité des données renvoyées à l'utilisateur (compatiblité technique, prix actuels...). 
 
 A faire:
-- revoir les coefficiants d'attribution des budgets
-- refaire scrap des casing
-- data processing (tokenisation...)
-- optimisation du code
-- méthode de close match
-- optimisation des combinaisons de composants
-- option de filtrage sur le frontend (GB de stockage,  marque de composants...)
+- KVER refactor les csv pour ne garder que les modèles génériques de certains composants tels que les cartes graphiques pour réduire la dimensionnalité
+- KVER réadapter les requêtes scrapy en conséquence
+- KVER revoir les coefficiants d'attribution des budgets
+- KVER refaire scrap des casing
+- ANTO data processing (tokenisation...)
+- ANTO optimisation du code
+- ANTO méthode de close match
+- ANTO optimisation des combinaisons de composants
+- KVER option de filtrage sur le frontend (GB de stockage,  marque de composants...)
 
 Contraintes:
 - disponibilité continues des données
