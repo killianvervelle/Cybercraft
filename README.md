@@ -3,8 +3,6 @@ Contexte:
 Il existe à ce jour plusieurs sites de configuration sur mesure d'ordinateurs et de benchmark de leurs composants. Les données sur lesquelles reposent ces services ne sont pas toujours mises à jour en temps réel ce qui va à l'encontre même de la pertinance de leurs recommendations aux utilisateurs. Notre API permettra de répondre aux mêmes besoins utilisateur de manière centralisée et au travers d'une interface utilisateur simplifiée, tout en garantissant l'exactitude et l'exaustivité des données renvoyées à l'utilisateur (compatiblité technique, prix actuels...). 
 
 A faire:
-- KVER refactor les csv pour ne garder que les modèles génériques de certains composants tels que les cartes graphiques pour réduire la dimensionnalité
-- KVER réadapter les requêtes scrapy en conséquence
 - KVER revoir les coefficiants d'attribution des budgets
 - KVER refaire scrap des casing
 - ANTO data processing (tokenisation...)
@@ -25,6 +23,8 @@ Done:
 - Scraping des composants chez différents fournisseurs  (TopReise) : prix, fournisseur
 - Réponse à l’utilisateur (configuration sélectionnée, prix, URL vers fournisseurs..)
 - scrapper user benchmark
+- refactor les csv pour ne garder que les modèles génériques de certains composants tels que les cartes graphiques pour réduire la dimensionnalité
+- réadapter les requêtes scrapy en conséquence
 
 Decision:
 - filtrer les composants des listes de benchmark des 3 dernières générations
@@ -32,6 +32,7 @@ Decision:
 - ne pas utiliser la loi Amdahl car ne permet pas de trouver la meilleur combinaison CPU GPU, seulement le meilleur GPU pour un CPU donné
 - pas réussi à scrapper les données du benchmark Heaven de Urigine
 - utiliser python-Levenshtein pour merger les csv de produits et leur caractéristiques
+- regrouper les cg par modèle car les benchmarks ne diffèrent que peu
 
 Table des compatibilité:
 - mb/boitier (dim)

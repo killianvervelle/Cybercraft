@@ -41,7 +41,7 @@ SSD,5MS23AA#ABC,HP,EX950 NVMe PCIe M.2 1TB,35,284,5166,https://ssd.userbenchmark
 SSD,MZ-V6P1T0BW,Samsung,960 Pro NVMe PCIe M.2 1TB,36,279,18356,https://ssd.userbenchmark.com/SpeedTest/200815/Samsung-SSD-960-PRO-1TB
 SSD,ASX8200PNP-1TT-C,Adata,XPG SX8200 Pro NVMe PCIe M.2 1TB,37,279,85928,https://ssd.userbenchmark.com/SpeedTest/638791/ADATA-SX8200PNP
 SSD,WDS100T3X0C,WD,Black SN750 NVMe PCIe M.2 1TB (2019),38,277,114373,https://ssd.userbenchmark.com/SpeedTest/703216/WDS100T3X0C-00SJG0
-SSD,SDSSDXPM2-1T00-G25,SanDisk,Extreme Pro NVMe PCIe M.2 1TB (2018),39,276,3261,https://ssd.userbenchmark.com/SpeedTest/493695/SanDisk-Extreme-Pro-1TB
+SSD,SDSSDXPM2-1T00-G25,SanDisk,Extreme Pro NVMe PCIe M.2 1TB,39,276,3261,https://ssd.userbenchmark.com/SpeedTest/493695/SanDisk-Extreme-Pro-1TB
 SSD,MZ-V7S500BW,Samsung,970 Evo Plus NVMe PCIe M.2 500GB,40,276,367854,https://ssd.userbenchmark.com/SpeedTest/700020/Samsung-SSD-970-EVO-Plus-500GB
 SSD,MZ-V7S500B/AM,Samsung,970 Evo Plus NVMe PCIe M.2 500GB,40,276,367854,https://ssd.userbenchmark.com/SpeedTest/700020/Samsung-SSD-970-EVO-Plus-500GB
 SSD,SSDPEK1W120GA01,Intel,800p NVMe PCIe M.2 118GB,41,275,124,https://ssd.userbenchmark.com/SpeedTest/489136/NVMe-INTEL-SSDPEK1W12
@@ -52,9 +52,9 @@ SSD,MZ-V6P2T0BW,Samsung,960 Pro NVMe PCIe M.2 2TB,45,271,3492,https://ssd.userbe
 SSD,MZ-V8P250BW,Samsung,980 Pro NVMe PCIe M.2 250GB,46,270,7549,https://ssd.userbenchmark.com/SpeedTest/1311638/Samsung-SSD-980-PRO-250GB
 SSD,2YY47AA#ABC,HP,EX920 NVMe PCIe M.2 1TB,47,267,16263,https://ssd.userbenchmark.com/SpeedTest/488611/HP-SSD-EX920-1TB
 SSD,MZ-V6P512BW,Samsung,960 Pro NVMe PCIe M.2 512GB,48,266,63520,https://ssd.userbenchmark.com/SpeedTest/182182/Samsung-SSD-960-PRO-512GB
-SSD,WDS200T3X0C,WD,Black SN750 NVMe PCIe M.2 2TB (2019),49,263,4259,https://ssd.userbenchmark.com/SpeedTest/764887/WDS200T3X0C-00SJG0
+SSD,WDS200T3X0C,WD,Black SN750 NVMe PCIe M.2 2TB,49,263,4259,https://ssd.userbenchmark.com/SpeedTest/764887/WDS200T3X0C-00SJG0
 SSD,SSDPEK1W060GA01,Intel,800p NVMe PCIe M.2 58GB,50,263,52,https://ssd.userbenchmark.com/SpeedTest/483445/NVMe-INTEL-SSDPEK1W06
-SSD,WDS100T2X0C,WD,Black NVMe PCIe M.2 1TB (2018),51,262,6712,https://ssd.userbenchmark.com/SpeedTest/486281/WDS100T2X0C-00L350
+SSD,WDS100T2X0C,WD,Black NVMe PCIe M.2 1TB,51,262,6712,https://ssd.userbenchmark.com/SpeedTest/486281/WDS100T2X0C-00L350
 SSD,MZ-V8V1T0B,Samsung,980 NVMe PCIe M.2 1TB,52,260,140876,https://ssd.userbenchmark.com/SpeedTest/1488476/Samsung-SSD-980-1TB
 SSD,SSDPEKNU010TZX1,Intel,670p NVMe PCIe M.2 1TB,53,259,11610,https://ssd.userbenchmark.com/SpeedTest/1493432/INTEL-SSDPEKNU010TZ
 SSD,ZP2000GM300,Seagate,FireCuda 510 NVMe PCIe M.2 2TB,54,259,1901,https://ssd.userbenchmark.com/SpeedTest/827002/Seagate-FireCuda-510-SSD-ZP2000GM30001

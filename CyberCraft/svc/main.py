@@ -88,19 +88,22 @@ class parameters(BaseModel):
 
 @rootapp.on_event("startup")
 def initialization():
-    global case, mb, rad, power, merged_cpu, merged_gpu, merged_ssd, merged_ram
+    global case, mb, rad, power, merged_cpu, listgpu, merged_ssd, merged_ram
     ram = pd.read_csv("data/ram.csv")
     ssd = pd.read_csv("data/ssd.csv")
     ssd_ = pd.read_csv("data/ssd_.csv")
     ram2 = pd.read_csv("data/ram2.csv")
     cpu = pd.read_csv("data/cpu.csv")
-    gpu = pd.read_csv("data/gpu.csv")
+    #gpu = pd.read_csv("data/gpu.csv")
     cpu2 = pd.read_csv("data/cpu2.csv")
-    gpu2 = pd.read_csv("data/gpu2.csv")
+    #gpu2 = pd.read_csv("data/gpu2.csv")
+    listgpu2 = pd.read_csv("data/gpu2.csv")
+    listgpu = pd.read_csv("data/gpu3.csv")
     case = pd.read_csv("data/case.csv")
     power = pd.read_csv("data/power.csv")
     mb = pd.read_csv("data/mb.csv")
     rad = pd.read_csv("data/rad.csv")
+    model = pd.read_csv("data/modelgpu.csv")
     
     # Looking for the closest match for all element inside both dataframes by applying the fuzzy function, then merging on the closest_match.
     cpu['closest_match'] = cpu['Model'].apply(lambda x: find_closest_match(x, cpu2['name']))
@@ -111,19 +114,30 @@ def initialization():
     merged_cpu['price'] = merged_cpu['price'].str.replace("'", "").astype(int)
 
     # Looking for the closest match for all element inside both dataframes by applying the fuzzy function, then merging on the closest_match.
-    gpu['closest_match'] = gpu['Part Number'].apply(lambda x: find_closest_match(x, gpu2['model']))
-    gpu2['closest_match'] = gpu2['model'].apply(lambda x: find_closest_match(x, gpu['Part Number']))
-    merged_gpu = pd.merge(gpu, gpu2, left_on='Part Number', right_on='closest_match')
-    merged_gpu['keep'] = merged_gpu.apply(lambda row: 1 if row['closest_match_x'] in row['model'] else 0, axis=1)
-    merged_gpu = merged_gpu[merged_gpu["keep"]==1].sort_values("Benchmark", ascending=False).drop(['Part Number', 'name', 'closest_match_y', 'closest_match_x', 'Brand', "keep", 'Type','URL','Samples'], axis=1)
+    #gpu['closest_match'] = gpu['Part Number'].apply(lambda x: find_closest_match(x, gpu2['model']))
+    #gpu2['closest_match'] = gpu2['model'].apply(lambda x: find_closest_match(x, gpu['Part Number']))
+    #merged_gpu = pd.merge(gpu, gpu2, left_on='Part Number', right_on='closest_match')
+    #merged_gpu['keep'] = merged_gpu.apply(lambda row: 1 if row['closest_match_x'] in row['model'] else 0, axis=1)
+    #merged_gpu = merged_gpu[merged_gpu["keep"]==1].sort_values("Benchmark", ascending=False).drop(['Part Number', 'name', 'closest_match_y', 'closest_match_x', 'Brand', "keep", 'Type','URL','Samples'], axis=1)
+    
+    unique_words = set(' '.join(model['productName'].tolist()).split())
+    listgpu2['name'] = listgpu2['name'].apply(lambda x: ' '.join([word for word in x.split() if word in unique_words]))
+    listgpu2 = listgpu2[~listgpu2['name'].isin(['', 'RX', 'RTX', 'Radeon', 'RX XT', 'GTX'])]
+    listgpu2['power_usage'] = clean(listgpu2['power_usage'], "W", "", float)
+    listgpu2['price'] = clean(listgpu2['price'], "'", "", float)
+    listgpu2['length'] = clean(listgpu2['length'], "mm", "", float)
+    listgpu2 = listgpu2.groupby('name')[['power_usage', 'length', 'price']].mean().reset_index()
+    listgpu['Model'] = listgpu['Model'].apply(lambda x: ' '.join([word for word in x.split() if word in unique_words]))  
+    listgpu = listgpu[~listgpu['Model'].isin(['', 'RX', 'RTX', 'Radeon', 'RX XT', 'GTX'])] 
+    listgpu = listgpu.groupby('Model')[['Benchmark']].mean().reset_index().rename(columns={'Model':'name'})
+    listgpu['name'] = listgpu['name'].str.replace("-", " ")
+    listgpu = pd.merge(left=listgpu, right=listgpu2, left_on='name', right_on='name').sort_values("Benchmark", ascending=False)
+    
     
     merged_ssd = pd.merge(ssd, ssd_, on='Model')
     merged_ram = pd.merge(ram, ram2, on='Model')
     
     power['power'] = clean(power['power'], "W", "", float)
-    merged_gpu['power_usage'] = clean(merged_gpu['power_usage'], "W", "", float)
-    merged_gpu['price'] = clean(merged_gpu['price'], "'", "", float)
-    merged_gpu['length'] = clean(merged_gpu['length'], "mm", "", float)
     case["len_gpu_max"] = clean(case["len_gpu_max"], "mm", "", float)
     rad["largeur"] = clean(rad["largeur"], "mm", "", float)
     
@@ -145,7 +159,7 @@ async def build(params: parameters):
     if params: logger.info('User requirements received')
     else: raise logger.error("Failed to import the user's requirements")
     budget = params.budget
-    gpu = unit(merged_gpu[merged_gpu['price'] < budget*0.3]).iloc[[0]]
+    gpu = unit(listgpu[listgpu['price'] < budget*0.3]).iloc[[0]]
     cpu = unit(merged_cpu[merged_cpu['price'] < budget*0.2]).iloc[[0]]
     ssd = unit(merged_ssd[merged_ssd['price'] < budget*0.1]).iloc[[0]]
     ram = unit(merged_ram[merged_ram['price'] < budget*0.1]).iloc[[0]]
@@ -155,7 +169,7 @@ async def build(params: parameters):
     case = listing(case, budget, 0.03)
     mb, power, rad, case = compatibility()
     # Scrapping the top priced supplier URLs
-    arg = [gpu.at[0,'Model'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
+    arg = [gpu.at[0,'name'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
     scrapp_latest_prices(arg)
     config = pd.read_csv('config.csv')
     config['name'] = config['name'].str[:25]
@@ -250,4 +264,3 @@ def compatibility():
             power.at[choice_power,"name"], \
             rad.at[choice_power,"name"], \
             case.at[choice_power,"name"], 
-    
