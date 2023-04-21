@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/style.css">
+
+    <!-- Materialize Javascript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- jQuery Javascript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!--   Chart.js Javascript -->
+
+</head>
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content black-text">
+                    <div class="row">
+                        <form class="col s12">
+                            <div class="center-align col s12">
+                                <img src="assets/logo.jpeg" width="50%" height="50%">
+                            </div>
+                            <div class="center-align">
+                                <label for="slider1">Select a resolution:</label>
+                                <input type="range" id="slider1" name="slider1" min="1" max="3" value="2" oninput="updateValue('slider1Value', this.value)">
+                                <span id="slider1Value">1440p</span>                                  
+                            </div>
+                            <div class="center-align">
+                                <label for="slider2">Select your budget:</label>
+                                <input type="range" id="slider2" name="slider2" min="1250" max="10000" step="50" value="5625" oninput="updateValue('slider2Value', this.value)">
+                                <span id="slider2Value">5625</span>
+                            </div>
+                            <div class="center-align">
+                                <label for="slider3">Select a performance:</label>
+                                <input type="range" id="slider3" name="slider3" min="0" max="200" step="1" value="100" oninput="updateValue('slider3Value', this.value)">
+                                <span id="slider3Value">100</span>
+                            </div>
+                            &nbsp
+                            <div class="button-container">
+                                <a class="reset btn" id="reset" onclick="reset()">Reset</a>
+                                <a class="execute btn" id="load" onclick="execute()">Search</a>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-tabs">
+                        <ul id="tabs" class="tabs tabs-fixed-width">
+                            <li class="tab"><a class="active" href="#ms-id-out">Output</a></li>
+                            <li class="tab"><a href="#ms-id-in">CURL Command</a></li>
+                        </ul>
+                        <div class="card-content blue-grey lighten-5">
+                            <div style="width: auto; overflow-x: auto;">
+                                <div style="display: flex;">
+                            <div id="ms-id-out">
+                                <p id="outputText"></p>
+                            </div>
+                            <div id="ms-id-in">
+                                <div class="code">
+                                    <code id="id-curl"></code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Custom JS -->
+<script src="assets/script.js"></script>
+
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+
+</body>
+</html>

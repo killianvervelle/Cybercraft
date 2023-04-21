@@ -1,0 +1,98 @@
+Web Scraping has many names, such as Web Harvesting, Screen Scraping, and others. It is a method of extracting large 
+quantities of data from websites and storing it at a particular location
+
+import scrapy
+from pathlib import Path
+from scrapy.crawler import CrawlerProcess
+
+scrapy.shell("https://docs.scrapy.org/en/latest/_static/selectors-sample1.html")
+    response.xpath('//title/text()').get()
+    response.xpath('//title/text()').getall()
+    response.css('img').xpath('@src').getall()
+    response.xpath('//div[@id="not-exists"]/text()').get(default='not-found')
+    response.xpath('//div[@id="not-exists"]/text()').get() is None
+    esponse.css('#images *::text').getall()
+        *::text selects all descendant text nodes of the current selector context:
+
+links = response.xpath('//a[contains(@href, "image")]')
+links.getall()
+['<a href="image1.html">Name: My image 1 <br><img src="image1_thumb.jpg"></a>',
+ '<a href="image2.html">Name: My image 2 <br><img src="image2_thumb.jpg"></a>',
+
+for index, link in enumerate(links):
+    href_xpath = link.xpath('@href').get()
+    img_xpath = link.xpath('img/@src').get()
+    print(f'Link number {index} points to url {href_xpath!r} and image {img_xpath!r}')
+
+Selecting attributes
+    response.css('a::attr(href)').getall()
+
+Using selectors with regular expressions¶
+    response.xpath('//a[contains(@href, "image")]/text()').re(r'Name:\s*(.*)')
+    ['My image 1',
+    'My image 2',
+
+Proper querying
+    for p in divs.xpath('.//p'):  # extracts all <p> inside
+        print(p.get())
+
+Select a class
+    sel = Selector(text='<div class="hero shout"><time datetime="2014-07-23 19:00">Special date</time></div>')
+    sel.css('.shout').xpath('./time/@datetime').getall()
+
+Beware of the difference between //node[1] and (//node)[1]¶
+    //node[1] selects all the nodes occurring first under their respective parents.
+    (//node)[1] selects all the nodes in the document, and then gets only the first of them.
+
+        sel = Selector(text="""
+    ....:     <ul class="list">
+    ....:         <li>1</li>
+    ....:         <li>2</li>
+    ....:         <li>3</li>
+    ....:     </ul>
+    ....:     <ul class="list">
+    ....:         <li>4</li>
+    ....:         <li>5</li>
+    ....:         <li>6</li>
+    ....:     </ul>""")
+    xp = lambda x: sel.xpath(x).getall()
+
+    xp("//li[1]")
+    xp("//ul/li[1]")
+
+Using text nodes in a condition
+    sel.xpath("string(//a[1])").getall() # convert it to string so text with all descendents
+    so: sel.xpath("//a[contains(., 'Next Page')]").getall() 
+
+Variables in XPath expressions (similar to parameterized queries or prepared statements in the SQL)
+    Here’s another example, to find the “id” attribute of a <div> tag containing five <a> children (here we pass the value 5 as an integer):
+
+    response.xpath('//div[count(a)=$cnt]/@id', cnt=5).get()
+    'images'
+
+If we call the Selector.remove_namespaces() method, all nodes can be accessed directly by their names:
+    response.selector.remove_namespaces()
+
+Other XPath extensions
+    response.xpath('//p[has-class("foo", "bar-baz")]')
+
+Iterate over all <p> tags and print their class attribute:
+    for node in sel.xpath("//p"):
+        print(node.attrib['class'])
+
+re(regex: Union[str, Pattern[str]], replace_entities: bool = True)→ List[str][source]
+    Call the .re() method for each element in this list and return their results flattened, as a list of strings.
+
+re_first(regex: Union[str, Pattern[str]], default: str, replace_entities: bool = True)→ str
+    Call the .re() method for the first element in this list and return the result in an string. If the list is empty or the regex doesn’t match anything, return the default value (None if the argument is not provided).
+
+xpath(xpath: str, namespaces: Optional[Mapping[str, str]] = None, **kwargs)→ SelectorList[_SelectorType][source]¶
+
+remove_namespaces()→ None[source]
+    Remove all namespaces, allowing to traverse the document using namespace-less xpaths.
+
+class scrapy.selector.Selector(*args, **kwargs)[source]
+    An instance of Selector is a wrapper over response to select certain parts of its content.
+
+            response = HtmlResponse(url = 'http://mysite.com', body = body) 
+        Selector(response = response).xpath('//span/text()').extract()
