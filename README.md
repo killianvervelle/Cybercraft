@@ -3,13 +3,13 @@ Contexte:
 Il existe à ce jour plusieurs sites de configuration sur mesure d'ordinateurs et de benchmark de leurs composants. Les données sur lesquelles reposent ces services ne sont pas toujours mises à jour en temps réel ce qui va à l'encontre même de la pertinance de leurs recommendations aux utilisateurs. Notre API permettra de répondre aux mêmes besoins utilisateur de manière centralisée et au travers d'une interface utilisateur simplifiée, tout en garantissant l'exactitude et l'exaustivité des données renvoyées à l'utilisateur (compatiblité technique, prix actuels...). 
 
 A faire:
-- Optimisation des contraintes par simplexe linéaire optimisisées (prix, performance (FPS). Utiliser les .csv de userbenchmark.com
-- Vérification compatibilié technique à l’aide de règles (sous-ensembles de composants, par ex: carte mère/processeur)
-- Scraping des composants chez différents fournisseurs  (TopReise) : prix, fournisseur
-- Réponse à l’utilisateur (configuration sélectionnée, prix, URL vers fournisseurs..)
-- scrapper user benchmark
 - revoir les coefficiants d'attribution des budgets
 - refaire scrap des casing
+- data processing (tokenisation...)
+- optimisation du code
+- méthode de close match
+- optimisation des combinaisons de composants
+- option de filtrage sur le frontend (GB de stockage,  marque de composants...)
 
 Contraintes:
 - disponibilité continues des données
@@ -19,10 +19,14 @@ Done:
 - Sélection contraintes pre-processing(IU) : res, prix, performance (FPS)
 - Scraping de configurations (composants, prix…). (Scrapy + squedualer)
 - Sélection d’une configuration selon contraintes
+- Vérification compatibilié technique à l’aide de règles (sous-ensembles de composants, par ex: carte mère/processeur)
+- Scraping des composants chez différents fournisseurs  (TopReise) : prix, fournisseur
+- Réponse à l’utilisateur (configuration sélectionnée, prix, URL vers fournisseurs..)
+- scrapper user benchmark
 
 Decision:
-- filtrer les composants des listes de benchmark des 4 dernières générations
-- retirer la notion de résolution et chercher à optimiser la performance théorique en fonction du coût. 
+- filtrer les composants des listes de benchmark des 3 dernières générations
+- retirer la notion de résolution et la performance dans les contraintes utilisateurs, trop compliqué à définir
 - ne pas utiliser la loi Amdahl car ne permet pas de trouver la meilleur combinaison CPU GPU, seulement le meilleur GPU pour un CPU donné
 - pas réussi à scrapper les données du benchmark Heaven de Urigine
 - utiliser python-Levenshtein pour merger les csv de produits et leur caractéristiques
