@@ -19,21 +19,15 @@ let jQuery = $(document).ready(function () {
 });
 
 function reset(){
-    document.getElementById('slider1').value ='';
-    document.getElementById('slider2').value ='';
-    document.getElementById('slider3').value ='';
-    updateValue('slider1Value', '2')
-    updateValue('slider2Value', '100')
-    updateValue('slider3Value', '5000')
+    document.getElementById('slider').value ='';
+    updateValue('sliderValue', '5000')
 }
 
 function execute(){
     // this is the path to the API route
     let url = root_url + "/" + "build";
     let response_array = [];
-    let res = document.getElementById('slider1Value').textContent
-    let budget = document.getElementById('slider2Value').textContent
-    let perf = document.getElementById('slider3Value').textContent
+    let budget = document.getElementById('sliderValue').textContent
 
     // build the request
     var xhttp = new XMLHttpRequest();
@@ -52,9 +46,7 @@ function execute(){
     };
 
     let param = {};  // this will hold the parameters passed to the API
-    param.res = res;
     param.budget = budget
-    param.perf = perf
     const data = JSON.stringify(param);
     console.log("data sent: " + data)
     xhttp.send(data);

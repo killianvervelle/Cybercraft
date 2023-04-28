@@ -19,6 +19,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <!--   Chart.js Javascript -->
 
+    <!-- Custom JS -->
+    <script src="assets/script.js"></script>
+
 </head>
 
 <body>
@@ -34,8 +37,8 @@
                             </div>
                             <div class="center-align">
                                 <label for="slider2">Select your budget:</label>
-                                <input type="range" id="slider2" name="slider2" min="1250" max="10000" step="50" value="5625" oninput="updateValue('slider2Value', this.value)">
-                                <span id="slider2Value">5625</span>
+                                <input type="range" id="slider" name="slider" min="1250" max="10000" step="50" value="5625" oninput="updateValue('sliderValue', this.value)">
+                                <span id="sliderValue">5625</span>
                             </div>
                             &nbsp
                             <div class="button-container">
@@ -51,7 +54,7 @@
                         </ul>
                         <div class="card-content blue-grey lighten-5">
                             <div style="width: auto; overflow-x: auto;">
-                                <div style="display: flex;">
+                                <div style="display: flex;"></div>
                             <div id="ms-id-out">
                                 <p id="outputText"></p>
                             </div>
@@ -63,13 +66,25 @@
                         </div>
                     </div>
                 </div>
-                </div>
-                </div>
             </div>
-        </div>
+            <div class="card-content black-text">
+                <span class="card-title"><b>Description du microservice</b></span>
+                <p>&nbsp;</p>
+                <p><b>Contexte</b></p>
+                <p>&nbsp;</p>
+                <p>Il existe à ce jour plusieurs sites de configuration sur mesure d'ordinateurs et de benchmark de leurs composants. 
+                    Les données sur lesquelles reposent ces services ne sont pas toujours mises à jour en temps réel ce qui va à l'encontre 
+                    même de la pertinance de leurs recommendations aux utilisateurs. Notre API permettra de répondre aux mêmes besoins utilisateur 
+                    de manière centralisée et au travers d'une interface utilisateur simplifiée, tout en garantissant l'exactitude et l'exaustivité 
+                    des données renvoyées à l'utilisateur (compatiblité technique, prix actuels...).  
+                </p>
+                <p>&nbsp;</p>
+                <p><b>Diagramme de séquence</b></p>
+                <img src="assets/seq.jpeg" width="70%" height="70%">
+            </div>
+        </div>     
     </div>
 </div>
-
 
 
 <!-- Custom JS -->

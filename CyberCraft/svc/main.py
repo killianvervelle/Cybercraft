@@ -34,31 +34,28 @@ SERVER_ADDRESS: str = os.getenv("SERVER_ADDRESS") or ""  #http://icoservices.kub
 rootapp = FastAPI()
 
 app = FastAPI(openapi_url='/specification')
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], 
+    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
-    openapi_schema = get_openapi(
-        title=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        routes=app.routes,
-    )
+    openapi_schema = get_openapi(title=NAME, version=VERSION, 
+        description=DESCRIPTION, routes=app.routes,)
+    openapi_schema["info"]["x-logo"] = {"url": "assets/digirent-logo.png"}
+    if SERVER_ADDRESS != "":
+        openapi_schema["servers"] = [
+            {"url": "http://digirent-ai.kube.isc.heia-fr.ch/" + URL_PREFIX, 
+            "description": "MS to predict best pub. strategy for a property."}
+        ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
-
-
-rootapp.openapi = custom_openapi
 rootapp.mount(URL_PREFIX, app)
+logger = logging.getLogger("uvicorn.error")
+logger.info('Starting app with URL_PREFIX=' + URL_PREFIX)
+
 
 
 # *****************************************************************************
@@ -76,9 +73,7 @@ logger.info('Starting app with URL_PREFIX=' + URL_PREFIX)
 
 
 class parameters(BaseModel):
-    res: str
     budget: int
-    perf: int
 
 
 # *****************************************************************************
