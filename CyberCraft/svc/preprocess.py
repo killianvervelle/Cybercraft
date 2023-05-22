@@ -85,7 +85,7 @@ class PreProcess:
         '''
         Save the cleaned CSV
         '''
-        path = "data/clean/Optimization/"
+        path = "data/clean/UserBenchmarks/"
         self.cpu.to_csv(path + "CPU.csv", sep=',', encoding='utf-8', index=False)
         self.gpu.to_csv(path + "GPU.csv", sep=',', encoding='utf-8', index=False)
         self.hdd.to_csv(path + "HDD.csv", sep=',', encoding='utf-8', index=False)
