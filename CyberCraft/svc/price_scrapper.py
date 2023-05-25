@@ -48,7 +48,7 @@ def get_elements_properties():
             try:
                 driver.execute_script("arguments[0].scrollIntoView();", row)
                 if saved_index == index:
-                    time.sleep(2)
+                    # time.sleep(2)
                     ActionChains(driver).move_to_element(row).perform()
                 
                 # Get the informations
@@ -63,7 +63,8 @@ def get_elements_properties():
                 saved_index = index
             
             # Extract the number from the price
-            price = re.findall("\d+\.\d+", price)[0]
+            price = re.findall("\d*'*\d+\.\d+", price)[0]
+            price = price.replace('\'', '')
             
             # Remove the designation from the description
             description = description.replace(f'{designation} - ','')
