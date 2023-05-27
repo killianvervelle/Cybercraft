@@ -1,16 +1,14 @@
 import os
 import logging
 import pandas as pd
-from celery import Celery
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import FileResponse, JSONResponse
+from starlette.responses import FileResponse
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 from fuzzywuzzy import fuzz
 from task import *
 from scrappy import *
-from flask import Flask, jsonify
 
 
 # *****************************************************************************
@@ -19,17 +17,18 @@ from flask import Flask, jsonify
 
 
 NAME = 'CyberCraft'
-VERSION = '1.1.0'
+VERSION = '1.1.9'
 DESCRIPTION = "CyberCraft was designed to build computer configurations with the best cost to performance ratio. It takes as \
     input component data scrapped on the internet and the user's requirements."
 SCRAP_PATH: str = 'data/'
 URL_PREFIX: str = os.getenv("URL_PREFIX") or ""
-SERVER_ADDRESS: str = os.getenv("SERVER_ADDRESS") or ""  #http://icoservices.kube.isc.heia-fr.ch/
+SERVER_ADDRESS: str = os.getenv("SERVER_ADDRESS") or ""
 
 
 # *****************************************************************************
 #                  FastAPI entry point declaration
 # *****************************************************************************
+
 
 rootapp = FastAPI()
 
@@ -57,7 +56,6 @@ logger = logging.getLogger("uvicorn.error")
 logger.info('Starting app with URL_PREFIX=' + URL_PREFIX)
 
 
-
 # *****************************************************************************
 #                  Set the logging for the service
 # *****************************************************************************
@@ -83,59 +81,48 @@ class parameters(BaseModel):
 
 @rootapp.on_event("startup")
 def initialization():
-    global case, mb, rad, power, merged_cpu, listgpu, merged_ssd, merged_ram
-    ram = pd.read_csv("data/raw/ram.csv")
-    ssd = pd.read_csv("data/raw/ssd.csv")
-    ssd_ = pd.read_csv("data/raw/ssd_.csv")
-    ram2 = pd.read_csv("data/raw/ram2.csv")
-    cpu = pd.read_csv("data/raw/cpu.csv")
-    #gpu = pd.read_csv("data/gpu.csv")
-    cpu2 = pd.read_csv("data/raw/cpu2.csv")
-    #gpu2 = pd.read_csv("data/gpu2.csv")
-    # listgpu2 = pd.read_csv("data/raw/gpu2.csv")
-    # listgpu = pd.read_csv("data/raw/gpu3.csv")
-    listgpu2 = pd.read_csv("data/raw/GPU.csv")
-    listgpu = pd.read_csv("data/clean/UserBenchmarks/GPU.csv")
+    global case, mb, rad, power, cpu, gpu, ssd, ram
+    ram_price = pd.read_csv("data/clean/LDLC/RAM.csv")
+    ram_bench = pd.read_csv("data/clean/UserBenchmarks/RAM.csv")
+    ssd_price = pd.read_csv("data/clean/LDLC/SSD.csv")
+    ssd_bench = pd.read_csv("data/clean/UserBenchmarks/SSD.csv")
+    cpu_price = pd.read_csv("data/clean/LDLC/CPU.csv")
+    cpu__bench = pd.read_csv("data/clean/UserBenchmarks/CPU.csv")
+    gpu_raw = gpu = pd.read_csv("data/raw/GPU.csv")
+    gpu_price = pd.read_csv("data/clean/LDLC/GPU.csv")
+    gpu__bench = pd.read_csv("data/clean/UserBenchmarks/GPU.csv")
     case = pd.read_csv("data/raw/case.csv")
     power = pd.read_csv("data/raw/power.csv")
     mb = pd.read_csv("data/raw/mb.csv")
     rad = pd.read_csv("data/raw/rad.csv")
-    model = pd.read_csv("data/raw/modelgpu.csv")
     
-    # Looking for the closest match for all element inside both dataframes by applying the fuzzy function, then merging on the closest_match.
-    cpu['closest_match'] = cpu['Model'].apply(lambda x: find_closest_match(x, cpu2['name']))
-    cpu2['closest_match'] = cpu2['name'].apply(lambda x: find_closest_match(x, cpu['Model']))
-    merged_cpu = pd.merge(cpu, cpu2, left_on='Model', right_on='closest_match')
-    merged_cpu['keep'] = merged_cpu.apply(lambda row: 1 if row['closest_match_y'] in row['name'] else 0, axis=1)
-    merged_cpu = merged_cpu[merged_cpu["keep"]==1].sort_values("Benchmark", ascending=False).drop(['name', 'Type', 'closest_match_x','closest_match_y','keep','URL','Samples'], axis=1)
-    merged_cpu['price'] = merged_cpu['price'].str.replace("'", "").astype(int)
+    gpu_raw['price'] = gpu_raw['price'].str.replace("'", "").astype('float')
+    gpu__bench['Model'] = gpu__bench['Model'].str.replace('-', ' ')
+    power['power'] = power['power'].str.replace('W', '').astype('float')
+    case['len_gpu_max'] = case['len_gpu_max'].str.replace('mm', '').astype('float')
+    rad['largeur'] = rad['largeur'].str.replace('mm', '').astype('float')
+    
+    gpu = pd.merge(gpu_price, gpu__bench, on='Model')
+    cpu = pd.merge(cpu_price, cpu__bench, on='Model')
+    ssd = pd.merge(ssd_price, ssd_bench, on='Model')
+    ram = pd.merge(ram_price, ram_bench, on='Part Number')
+    
+    # Merging csv files to retain compatiblity characteristics
+    terms = [term for term in gpu["Model"]]
+    split_terms = [term.split() for term in terms]
+    flattened_terms = [term for sublist in split_terms for term in sublist]
+    
+    # Filter out none key terms for gpu name
+    gpu_raw['name'] = gpu_raw['name'].apply(lambda x: ' '.join([word for word in x.split() if word in flattened_terms]))  
+    merged_gpu = gpu_raw.merge(gpu, left_on='name', right_on='Model').drop(columns=["model", "Brand_y", "price_y"]).rename(columns={'price_x': 'price'})
 
-    # Looking for the closest match for all element inside both dataframes by applying the fuzzy function, then merging on the closest_match.
-    #gpu['closest_match'] = gpu['Part Number'].apply(lambda x: find_closest_match(x, gpu2['model']))
-    #gpu2['closest_match'] = gpu2['model'].apply(lambda x: find_closest_match(x, gpu['Part Number']))
-    #merged_gpu = pd.merge(gpu, gpu2, left_on='Part Number', right_on='closest_match')
-    #merged_gpu['keep'] = merged_gpu.apply(lambda row: 1 if row['closest_match_x'] in row['model'] else 0, axis=1)
-    #merged_gpu = merged_gpu[merged_gpu["keep"]==1].sort_values("Benchmark", ascending=False).drop(['Part Number', 'name', 'closest_match_y', 'closest_match_x', 'Brand', "keep", 'Type','URL','Samples'], axis=1)
+    # agg max on power usage and length as a security margin
+    merged_gpu = merged_gpu.groupby('Model').agg({'power_usage': 'max', 'length': 'max', 'Memory': 'mean', 'Benchmark': 'mean', 'price': 'mean'}).sort_values(by='Benchmark').reset_index()
     
-    unique_words = set(' '.join(model['productName'].tolist()).split())
-    listgpu2['name'] = listgpu2['name'].apply(lambda x: ' '.join([word for word in x.split() if word in unique_words]))
-    listgpu2 = listgpu2[~listgpu2['name'].isin(['', 'RX', 'RTX', 'Radeon', 'RX XT', 'GTX'])]
-    listgpu2['power_usage'] = clean(listgpu2['power_usage'], "W", "", float)
-    listgpu2['price'] = clean(listgpu2['price'], "'", "", float)
-    listgpu2['length'] = clean(listgpu2['length'], "mm", "", float)
-    listgpu2 = listgpu2.groupby('name')[['power_usage', 'length', 'price']].mean().reset_index()
-    listgpu['Model'] = listgpu['Model'].apply(lambda x: ' '.join([word for word in x.split() if word in unique_words]))  
-    listgpu = listgpu[~listgpu['Model'].isin(['', 'RX', 'RTX', 'Radeon', 'RX XT', 'GTX'])] 
-    listgpu = listgpu.groupby('Model')[['Benchmark']].mean().reset_index().rename(columns={'Model':'name'})
-    listgpu['name'] = listgpu['name'].str.replace("-", " ")
-    listgpu = pd.merge(left=listgpu, right=listgpu2, left_on='name', right_on='name').sort_values("Benchmark", ascending=False)
-    
-    merged_ssd = pd.merge(ssd, ssd_, on='Model')
-    merged_ram = pd.merge(ram, ram2, on='Model')
-    
-    power['power'] = clean(power['power'], "W", "", float)
-    case["len_gpu_max"] = clean(case["len_gpu_max"], "mm", "", float)
-    rad["largeur"] = clean(rad["largeur"], "mm", "", float)
+    # removing mm and w from power and length for futur calculations
+    merged_gpu['power_usage'] = merged_gpu['power_usage'].str.replace('W', '').astype('int')
+    merged_gpu['length'] = merged_gpu['length'].str.replace('mm', '').astype('float')
+    return merged_gpu, cpu, ssd, ram, power, case, rad, mb
     
 
 # ******************************************************************************
@@ -147,37 +134,55 @@ def initialization():
 def info():
     return {'message': 'Welcome to CyberCraft, your very own personal computer configurator. Try out /showcase for the showcase and /docs for the doc.'}
 
-
 @app.post("/build")
 async def build(params: parameters):
-    global budget, ram, gpu, cpu, ssd, mb, rad, power, case
-    initialization()
-    if params: logger.info('User requirements received')
-    else: raise logger.error("Failed to import the user's requirements")
+    global budget
+    gpu, cpu, ssd, ram, power, case, rad, mb = initialization()
+    
+    # Setting the user budget as a variable
+    if params: 
+        logger.info('User requirements received')
+    else: 
+        raise logger.error("Failed to import the user's requirements")
     budget = params.budget
-    gpu = unit(listgpu[listgpu['price'] < budget*0.3]).iloc[[0]]
-    cpu = unit(merged_cpu[merged_cpu['price'] < budget*0.2]).iloc[[0]]
-    ssd = unit(merged_ssd[merged_ssd['price'] < budget*0.1]).iloc[[0]]
-    ram = unit(merged_ram[merged_ram['price'] < budget*0.1]).iloc[[0]]
+
+    # Selecting components from the user's budget, share was performed arbitrarily
+    gpu = unit(gpu[gpu['price'] < budget*0.3]).iloc[[0]]
+    cpu = unit(cpu[cpu['price'] < budget*0.2]).iloc[[0]]
+    ssd = unit(ssd[ssd['price'] < budget*0.1]).iloc[[0]]
+    ram = unit(ram[ram['price'] < budget*0.1]).iloc[[0]]
     mb = listing(mb, budget, 0.1)
     power = listing(power, budget, 0.1)
     rad = listing(rad, budget, 0.1)
     case = listing(case, budget, 0.03)
-    mb, power, rad, case = compatibility()
+    
+    # Processing the compatibility and building the final setup
+    mb, power, rad, case = compatibility(case, mb, rad, power, gpu, ram, budget)
+    
     # Scrapping the top priced supplier URLs
-    arg = [gpu.at[0,'name'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
+    arg = [gpu.at[0,'Model'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
     scrapp_latest_prices(arg)
-    config = pd.read_csv('config.csv')
+    
+    # Build the response returned to the user
+    config = pd.read_csv('config.csv').drop(['url'], axis=1)
     config['name'] = config['name'].str[:25]
-    #config['closest_match'] = config['name'].apply(lambda x: find_closest_match(x, arg))
-    config = config.drop(['url'], axis=1)  #'name'
-    config['type'] = config['type'].str.replace("Cartes graphiques & accessoires", "Carte graphique").replace("Processeurs", "Processeur")\
-        .replace("Disques durs & SSD", "Disque dur & SSD").replace("Refroidissement par eau", "Refroidissement").replace("Cartes mères", "Carte mère")\
-            .replace("Boîtiers & alimentation", "Boîtier & alimentation")  
-    return {'component1': config.iloc[[0]].to_json(orient='records'), 'component2': config.iloc[[1]].to_json(orient='records'), 
-            'component3': config.iloc[[2]].to_json(orient='records'), 'component4': config.iloc[[3]].to_json(orient='records'),
-            'component5': config.iloc[[4]].to_json(orient='records'), 'component6': config.iloc[[5]].to_json(orient='records'), 
-            'component7': config.iloc[[6]].to_json(orient='records'), 'component8': config.iloc[[7]].to_json(orient='records')}
+    config['type'] = config['type'].str\
+        .replace("Cartes graphiques & accessoires", "Carte graphique")\
+        .replace("Processeurs", "Processeur")\
+        .replace("Disques durs & SSD", "Disque dur & SSD")\
+        .replace("Refroidissement par eau", "Refroidissement")\
+        .replace("Cartes mères", "Carte mère")\
+        .replace("Boîtiers & alimentation", "Boîtier & alimentation") 
+    response = {}
+    ite = 0
+    while ite < 8:
+        try:
+            response[f"component{ite+1}"] = config.iloc[[ite]].to_json(orient='records')
+        except:
+            print(f"Item {ite+1} does not exist in the config file.")
+            response[f"component{ite+1}"] = "Process failed to select this component."
+        ite +=1
+    return response
 
 @app.get("/showcase")
 def showcase():
@@ -188,7 +193,6 @@ def showcase():
     logger.info("route '/showcase' called")
 
     return FileResponse(os.path.dirname(os.getcwd())+"/showcase/index.html")
-
 
 @app.get("/assets/{filename}")
 async def assets(filename: str):
@@ -201,6 +205,7 @@ async def assets(filename: str):
 #                  API Functions
 # ******************************************************************************
  
+ 
 def scrapp_latest_prices(arg):
     # Runs once to retrieve all benchmark
     process = CrawlerProcess(settings={
@@ -211,50 +216,55 @@ def scrapp_latest_prices(arg):
             'DUPEFILTER_CLASS': 'scrapy.dupefilters.BaseDupeFilter',
             "arg" : arg
         })  
-    process.crawl(QuotesSpider)
-    process.start()
-    process.stop()
-
-def clean(df, carac1, carac2, type):
-    return df.str.replace(carac1, carac2).astype(type)
-    
-# define a function to find the closest match between two strings
+    try:
+        # Start the Scrapy crawler
+        process.crawl(QuotesSpider)
+        process.start()
+    except:
+        # Catch KeyboardInterrupt and perform cleanup
+        process.stop()
+        process.join()
+        
+# function to find the closest match between two strings
 def find_closest_match(x, choices):
     return max(choices, key=lambda y: fuzz.ratio(x, y) if x and y else "No match found")
 
 def partial_ratio_1(x, y):
     return fuzz.partial_ratio(x, y, score_cutoff=1)
 
-# define a function to find the best match
+# function to find the best match
 def unit(df):
     return df[df['Benchmark'] == df['Benchmark'].max()].sort_values(by="price").iloc[[0]].reset_index(drop=True)
 
 def listing(df, budget, factor):
     return df[df['price'] < budget*factor].sort_values(by="price", ascending=False).reset_index(drop=True)
 
-# define a function to check the compatibility between pairs of hardwares and returns the selected component
-def compatibility():
-    global case, mb, rad, power
+# function to check the compatibility between pairs of hardwares and returns the selected component
+def compatibility(case, mb, rad, power, gpu, ram, budget):
     choice_case = 0
     choice_mb = 0
     choice_power = 0
     choice_rad = 0
     
     # Selecting motherboard with budget and memory type as constraints
-    while mb.at[choice_mb,"memory_type"] not in ram.at[0,"Model"] or mb.at[choice_mb,"price"] > budget * 0.1:
-        choice_mb +=1
+    while mb.at[choice_mb,"memory_type"] not in ram.at[0,"Model"] \
+          or mb.at[choice_mb,"price"] > budget * 0.1:
+            choice_mb +=1
     
     # Selecting power supply with budget and gpu power usage as constraints
-    while power.at[choice_power,"power"] <  gpu.at[0,"power_usage"] or power.at[choice_power,"price"] > budget * 0.1:
-        choice_power +=1
+    while power.at[choice_power,"power"] <  gpu.at[0,"power_usage"] \
+          or power.at[choice_power,"price"] > budget * 0.1:
+            choice_power +=1
     
     # Selecting cooling system with budget as constraint
     rad = rad.iloc[[choice_case]]
     
     # Selecting case with budget, gpu length, rad length and motherboard type as constraints
-    while case.at[choice_case,"len_gpu_max"] <  rad.at[choice_rad,"largeur"] or case.at[choice_case,"len_gpu_max"] < gpu.at[0,"length"]  \
-        or (mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb1"] and mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb2"]):
-        choice_case += 1   
+    while case.at[choice_case,"len_gpu_max"] <  rad.at[choice_rad,"largeur"] \
+          or case.at[choice_case,"len_gpu_max"] < gpu.at[0,"length"] \
+          or (mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb1"] \
+          and mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb2"]):
+            choice_case += 1   
     
     return  mb.at[choice_power,"name"], \
             power.at[choice_power,"name"], \
