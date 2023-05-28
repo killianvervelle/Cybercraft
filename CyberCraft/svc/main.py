@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import itertools
 import pandas as pd
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -91,7 +92,6 @@ class parameters(BaseModel):
 
 @rootapp.on_event("startup")
 def initialization():
-    global case, mb, rad, power, cpu, gpu, ssd, ram
     ram_price = pd.read_csv("data/clean/LDLC/RAM.csv")
     ram_bench = pd.read_csv("data/clean/UserBenchmarks/RAM.csv")
     ssd_price = pd.read_csv("data/clean/LDLC/SSD.csv")
@@ -177,39 +177,30 @@ async def build(params: parameters):
     mb = mb[mb['name'].str.contains(mother_brand)]
 
     # Selecting components from the user's budget, share was performed arbitrarily
-    try:
-        gpu = unit(gpu[gpu['price'] < budget*0.3])
-    except Exception as e:
-        return {"No gpu found, readjust requirements or increase budget."}
-    try:
-        cpu = unit(cpu[cpu['price'] < budget*0.2])
-    except Exception as e:
-        return {"No cpu found, readjust requirements or increase budget."}
-    try:
-        ssd = unit(ssd[ssd['price'] < budget*0.1])
-    except Exception as e:
-        return {"No ssd found, readjust requirements or increase budget."}
-    try:
-        ram = unit(ram[ram['price'] < budget*0.1])
-    except Exception as e:
-        return {"No ram found, readjust requirements or increase budget."}
-    try:    
-        mb = listing(mb, budget, 0.1)
-    except Exception as e:
-        return {"No motherboard found, readjust requirements or increase budget."}
-    try:
-        power = listing(power, budget, 0.1)
-    except Exception as e:
-        return {"No power supply found, readjust requirements or increase budget."}
-    try:
-        rad = listing(rad, budget, 0.1)
-    except Exception as e:
-        return {"No cooling system found, readjust requirements or increase budget."}
-    try:
-        case = listing(case, budget, 0.03)
-    except Exception as e:
-        return {"No case found, please requirements."}
     
+    components = {
+    'gpu': (gpu, budget * 0.3),
+    'cpu': (cpu, budget * 0.2),
+    'ssd': (ssd, budget * 0.1),
+    'ram': (ram, budget * 0.1),
+    'mb': (mb, 0.1),
+    'power': (power, 0.1),
+    'rad': (rad, 0.1),
+    'case': (case, 0.03)
+    }
+
+    for component, (df, threshold) in itertools.islice(components.items(), 4):
+        try:
+            df = unit(df[df['price'] < threshold])
+        except Exception as e:
+            return {f"No {component} found, readjust requirements or increase budget."}
+    
+    for component, (df, threshold) in itertools.islice(components.items(), 4, 8):
+        try:
+            df = listing(df, budget, threshold)
+        except Exception as e:
+            return {f"No {component} found, readjust requirements or increase budget."}
+
     # Processing the compatibility and building the final setup
     try:
         mb, power, rad, case = compatibility(case, mb, rad, power, gpu, ram, budget)
@@ -302,7 +293,7 @@ def compatibility(case, mb, rad, power, gpu, ram, budget):
     choice_mb = 0
     choice_power = 0
     choice_rad = 0
-    
+
     # Selecting motherboard with budget and memory type as constraints
     while mb.at[choice_mb,"memory_type"] not in ram.at[0,"Model"] \
           or mb.at[choice_mb,"price"] > budget * 0.1:
@@ -312,16 +303,16 @@ def compatibility(case, mb, rad, power, gpu, ram, budget):
     while power.at[choice_power,"power"] <  gpu.at[0,"power_usage"] \
           or power.at[choice_power,"price"] > budget * 0.1:
             choice_power +=1
-    
+
     # Selecting cooling system with budget as constraint
-    rad = rad.iloc[[choice_case]]
-    
+    rad = rad.iloc[[choice_rad]]
+
     # Selecting case with budget, gpu length, rad length and motherboard type as constraints
     while case.at[choice_case,"len_gpu_max"] <  rad.at[choice_rad,"largeur"] \
           or case.at[choice_case,"len_gpu_max"] < gpu.at[0,"length"] \
           or (mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb1"] \
           and mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb2"]):
-            choice_case += 1   
+            choice_case += 1 
     
     return  mb.at[choice_power,"name"], \
             power.at[choice_power,"name"], \
