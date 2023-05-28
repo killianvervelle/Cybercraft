@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Materialize CSS -->
+    <!-- Materialize CSS-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
@@ -22,6 +22,7 @@
     <!-- Custom JS -->
     <script src="assets/script.js"></script>
 
+
 </head>
 
 <body>
@@ -30,20 +31,153 @@
         <div class="col s12">
             <div class="card">
                 <div class="card-content black-text">
-                    <div class="row">
+                    <div class="row">           
                         <form class="col s12">
                             <div class="center-align col s12">
-                                <img src="assets/logo.jpeg" width="50%" height="50%">
+                                <div class="row">
+                                  <div class="col s12">
+                                    <img src="assets/logo.jpeg" width="50%" height="50%" class="responsive-img">
+                                  </div>
+                                  <div class="col s12">
+                                    <div class="caption" style="color: #8c8a8a; width: 400px; margin: 0 auto;">...your very own personal computer configurator...</div>
+                                    <p>&nbsp;</p>
+                                </div>
+                                </div>
                             </div>
-                            <div class="center-align">
-                                <label for="slider2">Select your budget:</label>
-                                <input type="range" id="slider" name="slider" min="1250" max="10000" step="50" value="5625" oninput="updateValue('sliderValue', this.value)">
-                                <span id="sliderValue">5625</span>
-                            </div>
-                            &nbsp
-                            <div class="button-container">
-                                <a class="reset btn" id="reset" onclick="reset()">Reset</a>
-                                <a class="execute btn" id="load" onclick="execute()">Search</a>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="slider-container">
+                                            <div class="caption">Budget:</div>
+                                            <div class="empty-space"></div>
+                                            <input type="range" id="slider" name="slider" min="1250" max="10000" step="50" value="5625" oninput="updateValue('sliderValue', this.value)">
+                                            <span id="sliderValue">5000</span>
+                                        </div>
+                                    </div>
+                                </div> 
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="caption">Processor:</div>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Brand</div>
+                                        <select class="custom-dropdown" id="cpu_brand">
+                                            <option selected></option>
+                                            <option value="Intel">Intel</option>
+                                            <option value="AMD">AMD</option>
+                                        </select>                                        
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="caption">Graphics card:</div>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Brand</div>
+                                        <select class="custom-dropdown" id="gpu_brand">
+                                            <option selected></option>
+                                            <option value="NVIDIA">NVIDIA</option>
+                                            <option value="AMD">AMD</option>
+                                        </select>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Memory size</div>
+                                        <select class="custom-dropdown" id="gpu_mem">
+                                            <option selected></option>
+                                            <option value="2">2</option>
+                                            <option value="4">4</option>
+                                            <option value="6">6</option>
+                                            <option value="8">8</option>
+                                            <option value="10">10</option>
+                                            <option value="12">12</option>
+                                            <option value="14">14</option>
+                                            <option value="16">16</option>
+                                            <option value="20">20</option>
+                                            <option value="24">24</option>
+                                            <option value="32">32</option>
+                                            <option value="48">48</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="caption">Memory:</div>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Brand</div>
+                                        <select class="custom-dropdown" id="ram_brand">
+                                            <option selected></option>
+                                            <option value="Corsair">Corsair</option>
+                                            <option value="G.SKILL">G.SKILL</option>
+                                            <!--<option value="Crucial">Crucial</option>
+                                            <option value="Fox Spirit">Fox Spirit</option>
+                                            <option value="Kingston">Kingston</option>
+                                            <option value="Lenovo">Lenovo</option>
+                                            <option value="Textorm">Textorm</option>-->
+                                        </select>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Nb of sticks</div>
+                                        <select class="custom-dropdown" id="ram_sticks">
+                                            <option selected></option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <!--<option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="8">8</option>-->
+                                        </select>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Capacity</div>
+                                        <select class="custom-dropdown" id="ram_capa">
+                                            <option selected></option>
+                                            <option value="2">2</option>
+                                            <option value="4">4</option>
+                                            <option value="8">8</option>
+                                            <option value="16">16</option>
+                                            <!--<option value="32">32</option>
+                                            <option value="64">64</option>
+                                            <option value="128">128</option>
+                                            <option value="192">192</option>
+                                            <option value="256">256</option>-->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="caption">SSD:</div>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Brand</div>
+                                        <select class="custom-dropdown" id="ssd_brand">
+                                            <option selected></option>
+                                            <option value="Corsair">Corsair</option>
+                                            <option value="Crucial">Crucial</option>
+                                            <option value="Fox Spirit">Fox Spirit</option>
+                                            <option value="Intel">Intel</option>
+                                            <option value="Kingston">Kingston</option>
+                                            <option value="LDLC">LDLC</option>
+                                            <option value="Samsung">Samsung</option>
+                                        </select>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Capacity</div>
+                                        <select class="custom-dropdown" id="ssd_capa">
+                                            <option selected></option>
+                                            <option value="100">100</option>
+                                            <option value="250">250</option>
+                                            <option value="500">500</option>
+                                            <option value="700">700</option>
+                                            <option value="1000">1000</option>
+                                            <option value="2000">2000</option>
+                                            <option value="4000">4000</option>
+                                            <option value="6000">6000</option>
+                                            <option value="8000">8000</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="line">
+                                        <div class="caption">Motherboard:</div>
+                                        <div class="caption" style="color: #8c8a8a; width: 100px; text-align: right;">Brand</div>
+                                        <select class="custom-dropdown" id="mother_brand">
+                                            <option selected></option>
+                                            <option value="ASRock">ASRock</option>
+                                            <option value="ASUS">ASUS</option>
+                                            <option value="Gigabyte">Gigabyte</option>
+                                            <option value="MSI">MSI</option>
+                                            <option value="NZXT">NZXT</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="button-container">
+                                    <a class="reset btn" id="reset" onclick="reset()">Reset</a>
+                                    <a class="execute btn" id="load" onclick="execute()">Search</a>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -68,15 +202,13 @@
                 </div>
             </div>
             <div class="card-content black-text">
-                <span class="card-title"><b>Description du microservice</b></span>
+                <p><b>Microservice description</b></p>
                 <p>&nbsp;</p>
-                <p><b>Contexte</b></p>
-                <p>&nbsp;</p>
-                <p>Il existe à ce jour plusieurs sites de configuration sur mesure d'ordinateurs et de benchmark de leurs composants. 
-                    Les données sur lesquelles reposent ces services ne sont pas toujours mises à jour en temps réel ce qui va à l'encontre 
-                    même de la pertinance de leurs recommendations aux utilisateurs. Notre API permettra de répondre aux mêmes besoins utilisateur 
-                    de manière centralisée et au travers d'une interface utilisateur simplifiée, tout en garantissant l'exactitude et l'exaustivité 
-                    des données renvoyées à l'utilisateur (compatiblité technique, prix actuels...).  
+                <p>To date, there are several custom computer configuration and component benchmarking websites. 
+                    The data on which these services rely are not always updated in real-time, which undermines the 
+                    relevance of their recommendations to users. Our API will address the same user needs in a 
+                    entralized manner and through a simplified user interface, while ensuring the accuracy and 
+                    comprehensiveness of the data provided to the user (technical compatibility, current prices, etc.).  
                 </p>
                 <!--<p>&nbsp;</p>
                 <p><b>Diagramme de séquence</b></p>

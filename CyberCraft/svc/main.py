@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import pandas as pd
 from fastapi import FastAPI
@@ -72,6 +73,15 @@ logger.info('Starting app with URL_PREFIX=' + URL_PREFIX)
 
 class parameters(BaseModel):
     budget: int
+    cpu_brand: str
+    gpu_brand: str
+    gpu_mem: int
+    ram_brand: str
+    ram_sticks: int
+    ram_capa: int
+    ssd_brand: str
+    ssd_capa: int
+    mother_brand: str
 
 
 # *****************************************************************************
@@ -88,7 +98,7 @@ def initialization():
     ssd_bench = pd.read_csv("data/clean/UserBenchmarks/SSD.csv")
     cpu_price = pd.read_csv("data/clean/LDLC/CPU.csv")
     cpu__bench = pd.read_csv("data/clean/UserBenchmarks/CPU.csv")
-    gpu_raw = gpu = pd.read_csv("data/raw/GPU.csv")
+    gpu_raw = pd.read_csv("data/raw/GPU.csv")
     gpu_price = pd.read_csv("data/clean/LDLC/GPU.csv")
     gpu__bench = pd.read_csv("data/clean/UserBenchmarks/GPU.csv")
     case = pd.read_csv("data/raw/case.csv")
@@ -114,10 +124,10 @@ def initialization():
     
     # Filter out none key terms for gpu name
     gpu_raw['name'] = gpu_raw['name'].apply(lambda x: ' '.join([word for word in x.split() if word in flattened_terms]))  
-    merged_gpu = gpu_raw.merge(gpu, left_on='name', right_on='Model').drop(columns=["model", "Brand_y", "price_y"]).rename(columns={'price_x': 'price'})
-
+    merged_gpu = gpu_raw.merge(gpu, left_on='name', right_on='Model').drop(columns=["model", "Brand_y", "price_y"]).rename(columns={'price_x': 'price', 'Brand_x': 'brand'})
+    cpu = cpu.drop(columns=["Brand_y"]).rename(columns={'Brand_x': 'brand'})
     # agg max on power usage and length as a security margin
-    merged_gpu = merged_gpu.groupby('Model').agg({'power_usage': 'max', 'length': 'max', 'Memory': 'mean', 'Benchmark': 'mean', 'price': 'mean'}).sort_values(by='Benchmark').reset_index()
+    merged_gpu = merged_gpu.groupby('Model').agg({'brand':'first','power_usage': 'max', 'length': 'max', 'Memory': 'mean', 'Benchmark': 'mean', 'price': 'mean'}).sort_values(by='Benchmark').reset_index()
     
     # removing mm and w from power and length for futur calculations
     merged_gpu['power_usage'] = merged_gpu['power_usage'].str.replace('W', '').astype('int')
@@ -145,19 +155,66 @@ async def build(params: parameters):
     else: 
         raise logger.error("Failed to import the user's requirements")
     budget = params.budget
+    cpu_brand = params.cpu_brand
+    gpu_brand = params.gpu_brand
+    gpu_mem = params.gpu_mem
+    ram_brand = params.ram_brand
+    ram_sticks = params.ram_sticks
+    ram_capa = params.ram_capa
+    ssd_brand = params.ssd_brand
+    ssd_capa = params.ssd_capa
+    mother_brand = params.mother_brand
+    
+    # Filtering the data files from the user's requirements
+    cpu = cpu[cpu['brand'] == cpu_brand]
+    gpu = gpu.loc[(gpu['brand'] == gpu_brand) 
+                & (gpu['Memory'] >= gpu_mem)]
+    ram = ram.loc[(ram['Brand'] == ram_brand) 
+                & (ram['Number of sticks'] >= ram_sticks) 
+                & (ram['Capacity of each stick'] >= ram_capa)]
+    ssd = ssd.loc[(ssd['Brand'] == ssd_brand) 
+                & (ssd['Memory'] >= ssd_capa)] 
+    mb = mb[mb['name'].str.contains(mother_brand)]
 
     # Selecting components from the user's budget, share was performed arbitrarily
-    gpu = unit(gpu[gpu['price'] < budget*0.3]).iloc[[0]]
-    cpu = unit(cpu[cpu['price'] < budget*0.2]).iloc[[0]]
-    ssd = unit(ssd[ssd['price'] < budget*0.1]).iloc[[0]]
-    ram = unit(ram[ram['price'] < budget*0.1]).iloc[[0]]
-    mb = listing(mb, budget, 0.1)
-    power = listing(power, budget, 0.1)
-    rad = listing(rad, budget, 0.1)
-    case = listing(case, budget, 0.03)
+    try:
+        gpu = unit(gpu[gpu['price'] < budget*0.3])
+    except Exception as e:
+        return {"No gpu found, readjust requirements or increase budget."}
+    try:
+        cpu = unit(cpu[cpu['price'] < budget*0.2])
+    except Exception as e:
+        return {"No cpu found, readjust requirements or increase budget."}
+    try:
+        ssd = unit(ssd[ssd['price'] < budget*0.1])
+    except Exception as e:
+        return {"No ssd found, readjust requirements or increase budget."}
+    try:
+        ram = unit(ram[ram['price'] < budget*0.1])
+    except Exception as e:
+        return {"No ram found, readjust requirements or increase budget."}
+    try:    
+        mb = listing(mb, budget, 0.1)
+    except Exception as e:
+        return {"No motherboard found, readjust requirements or increase budget."}
+    try:
+        power = listing(power, budget, 0.1)
+    except Exception as e:
+        return {"No power supply found, readjust requirements or increase budget."}
+    try:
+        rad = listing(rad, budget, 0.1)
+    except Exception as e:
+        return {"No cooling system found, readjust requirements or increase budget."}
+    try:
+        case = listing(case, budget, 0.03)
+    except Exception as e:
+        return {"No case found, please requirements."}
     
     # Processing the compatibility and building the final setup
-    mb, power, rad, case = compatibility(case, mb, rad, power, gpu, ram, budget)
+    try:
+        mb, power, rad, case = compatibility(case, mb, rad, power, gpu, ram, budget)
+    except Exception as e:
+        return {"Compatibility testing failed."} 
     
     # Scrapping the top priced supplier URLs
     arg = [gpu.at[0,'Model'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
