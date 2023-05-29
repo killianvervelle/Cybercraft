@@ -3,6 +3,7 @@ import sys
 import logging
 import itertools
 import pandas as pd
+from typing import Optional
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
@@ -73,16 +74,16 @@ logger.info('Starting app with URL_PREFIX=' + URL_PREFIX)
 
 
 class parameters(BaseModel):
-    budget: int
-    cpu_brand: str
-    gpu_brand: str
-    gpu_mem: int
-    ram_brand: str
-    ram_sticks: int
-    ram_capa: int
-    ssd_brand: str
-    ssd_capa: int
-    mother_brand: str
+    budget: Optional[int] = None
+    cpu_brand: Optional[str] = None
+    gpu_brand: Optional[str] = None
+    gpu_mem: Optional[int] = None
+    ram_brand: Optional[str] = None
+    ram_sticks: Optional[int] = None
+    ram_capa: Optional[int] = None
+    ssd_brand: Optional[str] = None
+    ssd_capa: Optional[int] = None
+    mother_brand: Optional[str] = None
 
 
 # *****************************************************************************
@@ -166,15 +167,15 @@ async def build(params: parameters):
     mother_brand = params.mother_brand
     
     # Filtering the data files from the user's requirements
-    cpu = cpu[cpu['brand'] == cpu_brand]
-    gpu = gpu.loc[(gpu['brand'] == gpu_brand) 
-                & (gpu['Memory'] >= gpu_mem)]
-    ram = ram.loc[(ram['Brand'] == ram_brand) 
-                & (ram['Number of sticks'] >= ram_sticks) 
-                & (ram['Capacity of each stick'] >= ram_capa)]
-    ssd = ssd.loc[(ssd['Brand'] == ssd_brand) 
-                & (ssd['Memory'] >= ssd_capa)] 
-    mb = mb[mb['name'].str.contains(mother_brand)]
+    cpu = cpu[cpu['brand'] == cpu_brand] if cpu_brand != "All" else cpu
+    gpu = gpu[gpu['brand'] == gpu_brand] if gpu_brand != "All" else gpu
+    gpu = gpu[gpu['Memory'] >= gpu_mem] if gpu_mem != 0 else gpu
+    ram = ram[ram['Brand'] == ram_brand] if ram_brand != "All" else ram
+    ram = ram[ram['Number of sticks'] >= ram_sticks] if ram_sticks != 0 else ram
+    ram = ram[ram['Capacity of each stick'] >= ram_capa] if ram_capa != 0 else ram
+    ssd = ssd[ssd['Brand'] == ssd_brand] if ssd_brand != "All" else ssd
+    ssd = ssd[ssd['Memory'] >= ssd_capa] if ssd_capa != 0 else ssd
+    mb = mb[mb['name'].str.contains(mother_brand)] if mother_brand != "All" else mb
 
     # Selecting components from the user's budget, share was performed arbitrarily
     
