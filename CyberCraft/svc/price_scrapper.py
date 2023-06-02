@@ -12,7 +12,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 
 options = webdriver.ChromeOptions()
-# options.headless = True
+# options.add_argument('--headless')
+options.add_argument("start-maximized")
 options.add_argument('--ignore-certificate-errors')
 options.binary_location = "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
 driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
@@ -34,6 +35,15 @@ def wait_for_element(by_type=By.ID, elem="component_1", from_elem=driver):
 def get_elements_properties():
     elem_list = []
     tbody = wait_for_element(By.CLASS_NAME, "item-table-body")
+    element_count = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.ID, 'count'))).text
+    
+    # Set the number of elements before triggering a reload
+    ELEM_TO_RELOAD = 40
+    ELEM_AT_RELOAD = 48
+    WAIT_TIME_MAX = 0
+    WAIT_TIMER = 2
+    current_scroll_line = 0
+
     # Mouse over the elements
     # stop=0
     all_elements_founds = False
@@ -46,21 +56,42 @@ def get_elements_properties():
             
             # Wait for the element to load
             try:
-                driver.execute_script("arguments[0].scrollIntoView();", row)
-                if saved_index == index:
-                    # time.sleep(2)
+                # If it's the first element, hover the first line
+                if index == 0:
+                    time.sleep(WAIT_TIMER)
                     ActionChains(driver).move_to_element(row).perform()
+                # Trigger a reload
+                elif current_scroll_line >= ELEM_TO_RELOAD:
+                    current_scroll_line = 0
+                    print('Testing reload...')
+                    ActionChains(driver).move_to_element(row).perform()
+                    # Test if the array is loading by performing the action again
+                    # (an exception is catched if it doesn't work)
+                    # ActionChains(driver).move_to_element(row).perform()
+                    # Get back to the last element
+                    # last_line = rows.find_elements(By.XPATH, f"//tr/td[0]/span[0][text()={last_designation}]")
+
+                    # print('last line:' + last_line)
+                    # ActionChains(driver).move_to_element(row).perform()
+                else:
+                    driver.execute_script("arguments[0].scrollIntoView();", row)
                 
                 # Get the informations
-                designation = WebDriverWait(row, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, 'item-designation'))).text
-                price = WebDriverWait(row, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, 'item-prix'))).text
-                description = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, 'description'))).text
+                designation = WebDriverWait(row, WAIT_TIME_MAX).until(EC.visibility_of_element_located((By.CLASS_NAME, 'item-designation'))).text
+                price = WebDriverWait(row, WAIT_TIME_MAX).until(EC.visibility_of_element_located((By.CLASS_NAME, 'item-prix'))).text
+                description = WebDriverWait(driver, WAIT_TIME_MAX).until(EC.visibility_of_element_located((By.CLASS_NAME, 'description'))).text
             except:
-                print(f'saved index : {saved_index}')
-                # time.sleep(2)
+                print('Waiting for the reload')
+                current_scroll_line = 0
+                # Set the index at the middle of the array
+                saved_index = ELEM_AT_RELOAD
+                time.sleep(WAIT_TIMER)
                 break
-            if index > saved_index:
-                saved_index = index
+            # if index > saved_index:
+            #     saved_index = index
+
+            # Increase the scrolled line
+            current_scroll_line += 1
             
             # Extract the number from the price
             price = re.findall("\d*'*\d+\.\d+", price)[0]
@@ -76,12 +107,23 @@ def get_elements_properties():
             # Early stopping for testing
             # stop += 1
             # if stop > 10 : break
-        if saved_index >= len(rows)-1: all_elements_founds = True
+        if index >= len(rows)-1: all_elements_founds = True
     
     # Close the pop-up
     driver.find_element(By.CLASS_NAME, "close").click()
+
+    # Remove duplicate
+    seen = set()
+    new_list = []
+    for d in elem_list:
+        t = tuple(d.items())
+        if t not in seen:
+            seen.add(t)
+            new_list.append(d)
+
+    print(f'found list size: {len(new_list)}, number of element in the page: {element_count}')
     
-    return elem_list
+    return new_list
 
 def write_csv(path, name, elem_list):
     # Export the list to a CSV file
