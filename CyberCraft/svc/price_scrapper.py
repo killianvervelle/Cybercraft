@@ -94,7 +94,7 @@ def get_elements_properties():
             current_scroll_line += 1
             
             # Extract the number from the price
-            price = re.findall("\d*'*\d+\.\d+", price)[0]
+            price = re.findall("\d*'*\d+\.\d+|$", price)[0]
             price = price.replace('\'', '')
             
             # Remove the designation from the description
@@ -153,14 +153,14 @@ def scrap_data(categories):
         print(f'Scraping for {key} done')
 
 # Categories with the number of apparition in the website
-categories = {'CPU'         :1,
-              'ventirad'    :2,
-              'motherboard' :3,
-              'RAM'         :4,
-              'GPU'         :5,
-              'SSD'         :6,
-              'HDD'         :7,
-              'case'        :8,
+categories = {#'CPU'         :1,
+#               'ventirad'    :2,
+#               'motherboard' :3,
+#               'RAM'         :4,
+#               'GPU'         :5,
+#               'SSD'         :6,
+#               'HDD'         :7,
+#               'case'        :8,
               'PSU'         :9}
 
 # Accept cookies
