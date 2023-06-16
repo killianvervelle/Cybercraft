@@ -24,16 +24,16 @@ class PreProcess:
         '''
         # Get the brand of the cpu
         re_brand = r'^(\w+)\b'
-        self.cpu['Brand'] = self.cpu['designation'].str.extract(re_brand)
+        self.cpu['brand'] = self.cpu['designation'].str.extract(re_brand)
 
         # Get the model of the cpu
         re_core = r'\b(Core\s+i\d-\d+[a-zA-Z]*)\b'
         re_ryzen = r'\b(Ryzen\s+[0-9]\s+\w*\s*\d+\w*)\b'
-        self.cpu['Model'] = self.cpu['designation'].str.extract(re_core).combine_first(self.cpu['designation'].str.extract(re_ryzen))
+        self.cpu['model'] = self.cpu['designation'].str.extract(re_core).combine_first(self.cpu['designation'].str.extract(re_ryzen))
 
         # Get the socket of the cpu
         re_socket = r'\b[sS]ocket\s+(\w+)\b'
-        self.cpu['Socket'] = self.cpu['description'].str.extract(re_socket)
+        self.cpu['socket'] = self.cpu['description'].str.extract(re_socket)
         
 
     def filter_gpu(self):
@@ -43,20 +43,20 @@ class PreProcess:
 
         # Get the brand of the gpu
         re_brand = r'(NVIDIA|AMD){1}'
-        self.gpu['Brand'] = self.gpu['description'].str.extract(re_brand)
+        self.gpu['brand'] = self.gpu['description'].str.extract(re_brand)
 
         # Get the model of the gpu
         re_model_nvidia = r'\b([GR]TX*\s+\d+\s*T*i*)\b'
         re_model_amd = r'\b(RX\s+\d+\s*X*T*X*)\b'
-        self.gpu['Model'] = self.gpu['description'].str.extract(re_model_nvidia) \
+        self.gpu['model'] = self.gpu['description'].str.extract(re_model_nvidia) \
              .combine_first(self.gpu['description'].str.extract(re_model_amd))
 
         # Get the memory of the gpu
         re_memory = r'^(\d+)\s*Go\b'
-        self.gpu['Memory'] = self.gpu['description'].str.extract(re_memory)
+        self.gpu['memory'] = self.gpu['description'].str.extract(re_memory)
 
         # Group the same model and averages the prices
-        self.gpu = self.gpu.groupby(['Brand', 'Model', 'Memory'], axis=0, as_index=False).mean(['price']).round(2)
+        self.gpu = self.gpu.groupby(['brand', 'model', 'memory'], axis=0, as_index=False).mean(['price']).round(2)
         
     def filter_ram(self):
         '''
@@ -64,22 +64,63 @@ class PreProcess:
         '''
         # Get the part number from the ram
         re_part_number = r'\s+-\s+\b([A-Z0-9\/\-]{10,})'
-        self.ram['Part Number'] = self.ram['description'].str.extract(re_part_number)
+        self.ram['part number'] = self.ram['description'].str.extract(re_part_number)
+        
+    def get_memory(self, cell:str, re_memory:str, tb_to_gb:int=1000):
+        match = re.search(re_memory, cell)
+        if match:
+            value = int(match.group(1))
+            unit = match.group(2)
+            if unit == 'T':
+                value *= tb_to_gb
+            return value
+        else:
+            return None
     
     def filter_hdd(self):
         '''
         Filter the hdd
         '''
-        self.hdd['Memory'] = self.hdd['Model'].apply(self.get_memory)
+        self.hdd['memory'] = self.hdd['model'].apply(self.get_memory)
+        
+    # Function to extract brand names from designation
+    def extract_brand_name(self, row, brands_names):
+        for brand in brands_names:
+            if brand in row['designation']:
+                return brand
+        return None
 
     def filter_ssd(self):
         '''
         Filter the ssd
         '''
-        brands = ['Samsung', 'Crucial', 'Kingston', 'Western Digital', 'Fox Spirit', 'Seagate', 'Textorm', 'Intel', 'Corsair']
+        # Extract the SSD brands
+        brands_names = ['Samsung', 'Crucial', 'Kingston', 'Western Digital', 'Fox Spirit', 'Seagate', 'Textorm', 'Intel', 'Corsair', 'LDLC']
         
-        self.ssd['Memory'] = self.ssd.apply(lambda row: self.get_memory(row['Model'], tb_to_gb=1024), axis=1)
+        # Extract brand names and create a new column
+        self.ssd['brand'] = self.ssd.apply(lambda x: self.extract_brand_name(x, brands_names), axis=1)
+        self.ssd['brand'] = self.ssd['brand'].str.replace('Western Digital', 'WD')
+
+        # Remove brand names from the designation column
+        for brand in brands_names:
+            self.ssd['designation'] = self.ssd['designation'].str.replace(brand, '')
         
+        # Remove other terms from the designation column
+        terms_to_remove = ['SSD', 'M.2', 'PCIe', 'NVMe', '2280', 'NAND', '3D', 'WD']
+        for term in terms_to_remove:
+            self.ssd['designation'] = self.ssd['designation'].str.replace(f'(?i){term}', '', regex=True)
+        
+        # Extract the SSD memory
+        re_memory = r'\s*(\d+)\s*(T|G)[Bo].*'
+        self.ssd['memory'] = self.ssd.apply(lambda row: self.get_memory(row['designation'], re_memory=re_memory, tb_to_gb=1024), axis=1)
+        self.ssd['designation'] = self.ssd['designation'].str.replace(f'(?i){re_memory}', '', regex=True)
+        
+        # Remove the '_' symbol
+        self.ssd['designation'] = self.ssd['designation'].str.replace('_', '')
+        
+        # Put the filtered designation in the Model column
+        self.ssd['model'] = self.ssd['designation']
+                
         
     def remove_unused_columns(self):
         '''
@@ -101,7 +142,7 @@ class PreProcess:
         self.gpu.to_csv(path + "GPU.csv", sep=',', encoding='utf-8', index=False)
         # self.hdd.to_csv(path + "HDD.csv", sep=',', encoding='utf-8', index=False)
         self.ram.to_csv(path + "RAM.csv", sep=',', encoding='utf-8', index=False)
-        # self.ssd.to_csv(path + "SSD.csv", sep=',', encoding='utf-8', index=False)
+        self.ssd.to_csv(path + "SSD.csv", sep=',', encoding='utf-8', index=False)
         
         
         
@@ -111,7 +152,7 @@ def main():
     preProcess.filter_gpu()
     # preProcess.filter_hdd()
     preProcess.filter_ram()
-    # preProcess.filter_ssd()
+    preProcess.filter_ssd()
     preProcess.remove_unused_columns()
     preProcess.save_csv()
     
