@@ -1,21 +1,10 @@
-from scrapy.crawler import CrawlerProcess
 from urllib.parse import urljoin
 import scrapy.dupefilters
-import pandas as pd
-from scrapy_splash import SplashRequest
 import scrapy
 import random
 import logging
 from bs4 import BeautifulSoup
-from scrapy import Spider
-from selenium import webdriver
-from scrapy.selector import Selector
-from scrapy.http import Request
-import pandas as pd
-from selenium import webdriver
 from urllib.parse import urlencode
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 logger = logging.getLogger("uvicorn.error")
 
 # Crawler Scrapy

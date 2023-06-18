@@ -5,7 +5,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -65,14 +65,6 @@ def get_elements_properties():
                     current_scroll_line = 0
                     print('Testing reload...')
                     ActionChains(driver).move_to_element(row).perform()
-                    # Test if the array is loading by performing the action again
-                    # (an exception is catched if it doesn't work)
-                    # ActionChains(driver).move_to_element(row).perform()
-                    # Get back to the last element
-                    # last_line = rows.find_elements(By.XPATH, f"//tr/td[0]/span[0][text()={last_designation}]")
-
-                    # print('last line:' + last_line)
-                    # ActionChains(driver).move_to_element(row).perform()
                 else:
                     driver.execute_script("arguments[0].scrollIntoView();", row)
                 
@@ -87,8 +79,6 @@ def get_elements_properties():
                 saved_index = ELEM_AT_RELOAD
                 time.sleep(WAIT_TIMER)
                 break
-            # if index > saved_index:
-            #     saved_index = index
 
             # Increase the scrolled line
             current_scroll_line += 1
@@ -153,14 +143,14 @@ def scrap_data(categories):
         print(f'Scraping for {key} done')
 
 # Categories with the number of apparition in the website
-categories = {#'CPU'         :1,
-#               'ventirad'    :2,
-#               'motherboard' :3,
-#               'RAM'         :4,
-#               'GPU'         :5,
-#               'SSD'         :6,
-#               'HDD'         :7,
-#               'case'        :8,
+categories = {'CPU'         :1,
+              'ventirad'    :2,
+              'motherboard' :3,
+              'RAM'         :4,
+              'GPU'         :5,
+              'SSD'         :6,
+              'HDD'         :7,
+              'case'        :8,
               'PSU'         :9}
 
 # Accept cookies
