@@ -7,9 +7,10 @@ class PreProcess:
         '''
         Load the data from the CSV
         '''
-        path = "data/raw/LDLC/"
+        path = "../data/raw/LDLC/"
         self.cpu = pd.read_csv(path + "CPU.csv", encoding='latin-1')
         self.gpu = pd.read_csv(path + "GPU.csv", encoding='latin-1')
+        self.gpu_specs = pd.read_csv(path + "GPU_specs.csv", encoding='latin-1')
         self.hdd = pd.read_csv(path + "HDD.csv", encoding='latin-1')
         self.ram = pd.read_csv(path + "RAM.csv", encoding='latin-1')
         self.ssd = pd.read_csv(path + "SSD.csv", encoding='latin-1')
@@ -57,6 +58,31 @@ class PreProcess:
 
         # Group the same model and averages the prices
         self.gpu = self.gpu.groupby(['brand', 'model', 'memory'], axis=0, as_index=False).mean(['price']).round(2)
+        
+    def filter_gpu_specs(self):
+        '''
+        Add lenght and power data to the gpu specs
+        '''
+
+        # Get the model of the gpu
+        re_model_nvidia = r'\b([GR]TX*\s+\d+\s*T*i*)\b'
+        re_model_amd = r'\b(RX\s+\d+\s*X*T*X*)\b'
+        self.gpu_specs['model'] = self.gpu_specs['name'].str.extract(re_model_nvidia) \
+             .combine_first(self.gpu_specs['name'].str.extract(re_model_amd))
+             
+        
+        self.gpu_specs['power_usage'] = self.gpu_specs['power_usage'].str.replace('W', '').astype('int')
+        self.gpu_specs['length'] = self.gpu_specs['length'].str.replace('mm', '').astype('float')
+
+        # Group the same model and averages the prices
+        self.gpu_specs = self.gpu_specs.groupby(['model'], axis=0, as_index=False).max(['power_usage', 'length']).round(1)
+        
+        # Add the specs to the gpu models
+        self.gpu_specs['model'] = self.gpu_specs['model'].str.strip()
+        self.gpu = pd.merge(self.gpu, self.gpu_specs, how='outer', on=['model'])
+        
+        # Remove rows with missing values
+        self.gpu = self.gpu.dropna()
         
     def filter_ram(self):
         '''
@@ -137,7 +163,7 @@ class PreProcess:
         '''
         Save the cleaned CSV
         '''
-        path = "data/clean/LDLC/"
+        path = "../data/clean/LDLC/"
         self.cpu.to_csv(path + "CPU.csv", sep=',', encoding='utf-8', index=False)
         self.gpu.to_csv(path + "GPU.csv", sep=',', encoding='utf-8', index=False)
         # self.hdd.to_csv(path + "HDD.csv", sep=',', encoding='utf-8', index=False)
@@ -150,6 +176,7 @@ def main():
     preProcess = PreProcess()
     preProcess.filter_cpu()
     preProcess.filter_gpu()
+    preProcess.filter_gpu_specs()
     # preProcess.filter_hdd()
     preProcess.filter_ram()
     preProcess.filter_ssd()

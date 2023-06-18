@@ -8,11 +8,21 @@ class Optimizer:
         Load the data from the CSV
         '''
         self.max_budget = max_budget
+        
+    @classmethod
+    def from_filename(cls):
         path = "data/clean/merged/"
-        self.cpu = pd.read_csv(path + "CPU.csv", encoding='latin-1')
-        self.gpu = pd.read_csv(path + "GPU.csv", encoding='latin-1')
-        self.ram = pd.read_csv(path + "RAM.csv", encoding='latin-1')
-        self.ssd = pd.read_csv(path + "SSD.csv", encoding='latin-1')
+        cls.cpu = pd.read_csv(path + "CPU.csv", encoding='latin-1')
+        cls.gpu = pd.read_csv(path + "GPU.csv", encoding='latin-1')
+        cls.ram = pd.read_csv(path + "RAM.csv", encoding='latin-1')
+        cls.ssd = pd.read_csv(path + "SSD.csv", encoding='latin-1')
+        
+    @classmethod
+    def from_dataframes(cls, cpu:pd.DataFrame, gpu:pd.DataFrame, ram:pd.DataFrame, ssd:pd.DataFrame):
+        cls.cpu = cpu
+        cls.gpu = gpu
+        cls.ram = ram
+        cls.ssd = ssd
         
     def preprocess(self):
         '''
@@ -124,10 +134,13 @@ class Optimizer:
             self.print_results()
         else:
             print(f"No configuration was possible with the given budget of {self.max_budget:.2f} CHF.")
+            
+        return self.cpu, self.gpu, self.ram, self.ssd
         
 def main():
     max_budget = 1500
     optimizer = Optimizer(max_budget)
+    Optimizer.from_filename()
     optimizer.optimize()
     
 if __name__ == "__main__":

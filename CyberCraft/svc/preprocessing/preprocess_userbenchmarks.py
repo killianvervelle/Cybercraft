@@ -7,7 +7,7 @@ class PreProcess:
         '''
         Load the data from the CSV
         '''
-        path = "data/raw/UserBenchmarks/"
+        path = "../data/raw/UserBenchmarks/"
         self.cpu = pd.read_csv(path + "CPU_UserBenchmarks.csv")
         self.gpu = pd.read_csv(path + "GPU_UserBenchmarks.csv")
         self.hdd = pd.read_csv(path + "HDD_UserBenchmarks.csv")
@@ -110,7 +110,7 @@ class PreProcess:
         '''
         Save the cleaned CSV
         '''
-        path = "data/clean/UserBenchmarks/"
+        path = "../data/clean/UserBenchmarks/"
         self.cpu.to_csv(path + "CPU.csv", sep=',', encoding='utf-8', index=False)
         self.gpu.to_csv(path + "GPU.csv", sep=',', encoding='utf-8', index=False)
         self.hdd.to_csv(path + "HDD.csv", sep=',', encoding='utf-8', index=False)

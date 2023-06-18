@@ -13,6 +13,8 @@ from fuzzywuzzy import fuzz
 from task import *
 from scrappy import *
 
+from optimizer import Optimizer
+
 
 # *****************************************************************************
 #                  Some global constants and variables
@@ -93,47 +95,20 @@ class parameters(BaseModel):
 
 @rootapp.on_event("startup")
 def initialization():
-    ram_price = pd.read_csv("data/clean/LDLC/RAM.csv")
-    ram_bench = pd.read_csv("data/clean/UserBenchmarks/RAM.csv")
-    ssd_price = pd.read_csv("data/clean/LDLC/SSD.csv")
-    ssd_bench = pd.read_csv("data/clean/UserBenchmarks/SSD.csv")
-    cpu_price = pd.read_csv("data/clean/LDLC/CPU.csv")
-    cpu__bench = pd.read_csv("data/clean/UserBenchmarks/CPU.csv")
-    gpu_raw = pd.read_csv("data/raw/GPU.csv")
-    gpu_price = pd.read_csv("data/clean/LDLC/GPU.csv")
-    gpu__bench = pd.read_csv("data/clean/UserBenchmarks/GPU.csv")
+    cpu = pd.read_csv("data/clean/merged/CPU.csv")
+    gpu = pd.read_csv("data/clean/merged/GPU.csv")
+    ram = pd.read_csv("data/clean/merged/RAM.csv")
+    ssd = pd.read_csv("data/clean/merged/SSD.csv")
     case = pd.read_csv("data/raw/case.csv")
     power = pd.read_csv("data/raw/power.csv")
     mb = pd.read_csv("data/raw/mb.csv")
     rad = pd.read_csv("data/raw/rad.csv")
     
-    gpu_raw['price'] = gpu_raw['price'].str.replace("'", "").astype('float')
-    gpu__bench['Model'] = gpu__bench['Model'].str.replace('-', ' ')
     power['power'] = power['power'].str.replace('W', '').astype('float')
     case['len_gpu_max'] = case['len_gpu_max'].str.replace('mm', '').astype('float')
     rad['largeur'] = rad['largeur'].str.replace('mm', '').astype('float')
     
-    gpu = pd.merge(gpu_price, gpu__bench, on='Model')
-    cpu = pd.merge(cpu_price, cpu__bench, on='Model')
-    ssd = pd.merge(ssd_price, ssd_bench, on='Model')
-    ram = pd.merge(ram_price, ram_bench, on='Part Number')
-    
-    # Merging csv files to retain compatiblity characteristics
-    terms = [term for term in gpu["Model"]]
-    split_terms = [term.split() for term in terms]
-    flattened_terms = [term for sublist in split_terms for term in sublist]
-    
-    # Filter out none key terms for gpu name
-    gpu_raw['name'] = gpu_raw['name'].apply(lambda x: ' '.join([word for word in x.split() if word in flattened_terms]))  
-    merged_gpu = gpu_raw.merge(gpu, left_on='name', right_on='Model').drop(columns=["model", "Brand_y", "price_y"]).rename(columns={'price_x': 'price', 'Brand_x': 'brand'})
-    cpu = cpu.drop(columns=["Brand_y"]).rename(columns={'Brand_x': 'brand'})
-    # agg max on power usage and length as a security margin
-    merged_gpu = merged_gpu.groupby('Model').agg({'brand':'first','power_usage': 'max', 'length': 'max', 'Memory': 'mean', 'Benchmark': 'mean', 'price': 'mean'}).sort_values(by='Benchmark').reset_index()
-    
-    # removing mm and w from power and length for futur calculations
-    merged_gpu['power_usage'] = merged_gpu['power_usage'].str.replace('W', '').astype('int')
-    merged_gpu['length'] = merged_gpu['length'].str.replace('mm', '').astype('float')
-    return merged_gpu, cpu, ssd, ram, power, case, rad, mb
+    return gpu, cpu, ssd, ram, power, case, rad, mb
     
 
 # ******************************************************************************
@@ -169,12 +144,12 @@ async def build(params: parameters):
     # Filtering the data files from the user's requirements
     cpu = cpu[cpu['brand'] == cpu_brand] if cpu_brand != "All" else cpu
     gpu = gpu[gpu['brand'] == gpu_brand] if gpu_brand != "All" else gpu
-    gpu = gpu[gpu['Memory'] >= gpu_mem] if gpu_mem != 0 else gpu
+    gpu = gpu[gpu['memory'] >= gpu_mem] if gpu_mem != 0 else gpu
     ram = ram[ram['Brand'] == ram_brand] if ram_brand != "All" else ram
     ram = ram[ram['Number of sticks'] >= ram_sticks] if ram_sticks != 0 else ram
     ram = ram[ram['Capacity of each stick'] >= ram_capa] if ram_capa != 0 else ram
     ssd = ssd[ssd['Brand'] == ssd_brand] if ssd_brand != "All" else ssd
-    ssd = ssd[ssd['Memory'] >= ssd_capa] if ssd_capa != 0 else ssd
+    ssd = ssd[ssd['memory'] >= ssd_capa] if ssd_capa != 0 else ssd
     mb = mb[mb['name'].str.contains(mother_brand)] if mother_brand != "All" else mb
 
     # Selecting components from the user's budget, share was performed arbitrarily
@@ -187,14 +162,20 @@ async def build(params: parameters):
     'mb': (mb, 0.1),
     'power': (power, 0.1),
     'rad': (rad, 0.1),
-    'case': (case, 0.03)
+    'case': (case, 0.1)
     }
 
-    for component, (df, threshold) in itertools.islice(components.items(), 4):
-        try:
-            df = unit(df[df['price'] < threshold])
-        except Exception as e:
-            return {f"No {component} found, readjust requirements or increase budget."}
+    # for component, (df, threshold) in itertools.islice(components.items(), 4):
+    #     try:
+    #         df = unit(df[df['price'] < threshold])
+    #     except Exception as e:
+    #         return {f"No {component} found, readjust requirements or increase budget."}
+    
+    # Find the main components
+    max_budget = budget * 0.7
+    optimizer = Optimizer(max_budget)
+    Optimizer.from_dataframes(cpu, gpu, ram, ssd)
+    cpu, gpu, ram, ssd = optimizer.optimize()
     
     for component, (df, threshold) in itertools.islice(components.items(), 4, 8):
         try:
@@ -206,10 +187,11 @@ async def build(params: parameters):
     try:
         mb, power, rad, case = compatibility(case, mb, rad, power, gpu, ram, budget)
     except Exception as e:
-        return {"Compatibility testing failed."} 
+        return {"Compatibility testing failed."}
     
     # Scrapping the top priced supplier URLs
-    arg = [gpu.at[0,'Model'], cpu.at[0,'Model'], ssd.at[0,'Model'], ram.at[0,'Model'], mb, power, rad, case]
+    arg = [gpu.at[0,'model'], cpu.at[0,'model'], ssd.at[0,'model'], ram.at[0,'model'], mb, power, rad, case]
+    print(arg)
     scrapp_latest_prices(arg)
     
     # Build the response returned to the user
@@ -283,7 +265,7 @@ def partial_ratio_1(x, y):
 
 # function to find the best match
 def unit(df):
-    return df[df['Benchmark'] == df['Benchmark'].max()].sort_values(by="price").iloc[[0]].reset_index(drop=True)
+    return df[df['benchmark'] == df['benchmark'].max()].sort_values(by="price").iloc[[0]].reset_index(drop=True)
 
 def listing(df, budget, factor):
     return df[df['price'] < budget*factor].sort_values(by="price", ascending=False).reset_index(drop=True)
@@ -296,10 +278,10 @@ def compatibility(case, mb, rad, power, gpu, ram, budget):
     choice_rad = 0
 
     # Selecting motherboard with budget and memory type as constraints
-    while mb.at[choice_mb,"memory_type"] not in ram.at[0,"Model"] \
+    while mb.at[choice_mb,"memory_type"] not in ram.at[0,"model"] \
           or mb.at[choice_mb,"price"] > budget * 0.1:
             choice_mb +=1
-    
+
     # Selecting power supply with budget and gpu power usage as constraints
     while power.at[choice_power,"power"] <  gpu.at[0,"power_usage"] \
           or power.at[choice_power,"price"] > budget * 0.1:

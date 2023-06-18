@@ -6,14 +6,14 @@ class Merger:
         '''
         Load the data from the CSV
         '''
-        path_ldlc = "data/clean/LDLC/"
+        path_ldlc = "../data/clean/LDLC/"
         self.cpu_ldlc = pd.read_csv(path_ldlc + "CPU.csv", encoding='latin-1')
         self.gpu_ldlc = pd.read_csv(path_ldlc + "GPU.csv", encoding='latin-1')
         # self.hdd_ldlc = pd.read_csv(path_ldlc + "HDD.csv", encoding='latin-1')
         self.ram_ldlc = pd.read_csv(path_ldlc + "RAM.csv", encoding='latin-1')
         self.ssd_ldlc = pd.read_csv(path_ldlc + "SSD.csv", encoding='latin-1')
         
-        path_usr_bench = "data/clean/UserBenchmarks/"
+        path_usr_bench = "../data/clean/UserBenchmarks/"
         self.cpu_usr = pd.read_csv(path_usr_bench + "CPU.csv", encoding='latin-1')
         self.gpu_usr = pd.read_csv(path_usr_bench + "GPU.csv", encoding='latin-1')
         # self.hdd_usr = pd.read_csv(path_usr_bench + "HDD.csv", encoding='latin-1')
@@ -95,7 +95,7 @@ class Merger:
         '''
         Save the cleaned CSV
         '''
-        path = "data/clean/merged/"
+        path = "../data/clean/merged/"
         self.cpu.to_csv(path + "CPU.csv", sep=',', encoding='utf-8', index=False)
         self.gpu.to_csv(path + "GPU.csv", sep=',', encoding='utf-8', index=False)
         # self.hdd.to_csv(path + "HDD.csv", sep=',', encoding='utf-8', index=False)
