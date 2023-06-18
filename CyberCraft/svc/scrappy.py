@@ -1,5 +1,7 @@
+from scrapy.crawler import CrawlerProcess
 from urllib.parse import urljoin
 import scrapy.dupefilters
+from scrapy_splash import SplashRequest
 import scrapy
 import random
 import logging
