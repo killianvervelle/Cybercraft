@@ -15,4 +15,13 @@ pathlib==1.0.1
 urllib3==1.26.11
 celery==5.2.7
 python-Levenshtein==0.20.9
-scrapeops-scrapy-proxy-sdk
+scrapeops-scrapy-proxy-sdk==1.0
+fuzzywuzzy==0.18.0
+typing==3.7.4.3
+itertools==
+logger==1.4
+redis==4.5.4
+selenium==4.8.3
+urllib3==1.26.11
+beautifulsoup4==4.8.2
+scrapy_splash==0.9.0
