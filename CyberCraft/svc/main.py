@@ -153,35 +153,28 @@ async def build(params: parameters):
     mb = mb[mb['name'].str.contains(mother_brand)] if mother_brand != "All" else mb
 
     # Selecting components from the user's budget, share was performed arbitrarily
-    
-    components = {
-    'gpu': (gpu, budget * 0.3),
-    'cpu': (cpu, budget * 0.2),
-    'ssd': (ssd, budget * 0.1),
-    'ram': (ram, budget * 0.1),
-    'mb': (mb, 0.1),
-    'power': (power, 0.1),
-    'rad': (rad, 0.1),
-    'case': (case, 0.1)
-    }
-
-    # for component, (df, threshold) in itertools.islice(components.items(), 4):
-    #     try:
-    #         df = unit(df[df['price'] < threshold])
-    #     except Exception as e:
-    #         return {f"No {component} found, readjust requirements or increase budget."}
-    
+        
     # Find the main components
     max_budget = budget * 0.7
     optimizer = Optimizer(max_budget)
-    Optimizer.from_dataframes(cpu, gpu, ram, ssd)
+    optimizer.from_dataframes(cpu, gpu, ram, ssd)
     cpu, gpu, ram, ssd = optimizer.optimize()
+    if cpu is None:
+        return {f"No mains parts found, please readjust requirements or increase budget."}
     
-    for component, (df, threshold) in itertools.islice(components.items(), 4, 8):
+    # Find the others components
+    components = {
+    'mb': (mb, 0.1),
+    'power': (power, 0.1),
+    'rad': (rad, 0.05),
+    'case': (case, 0.05)
+    }
+    
+    for component, (df, threshold) in itertools.islice(components.items(), len(components)):
         try:
             df = listing(df, budget, threshold)
         except Exception as e:
-            return {f"No {component} found, readjust requirements or increase budget."}
+            return {f"No {component} found, please readjust requirements or increase budget."}
 
     # Processing the compatibility and building the final setup
     try:
@@ -190,8 +183,7 @@ async def build(params: parameters):
         return {"Compatibility testing failed."}
     
     # Scrapping the top priced supplier URLs
-    arg = [gpu.at[0,'model'], cpu.at[0,'model'], ssd.at[0,'model'], ram.at[0,'model'], mb, power, rad, case]
-    print(arg)
+    arg = [gpu["model"].iloc[0], cpu["model"].iloc[0], ssd["model"].iloc[0], ram["model"].iloc[0], mb, power, rad, case]
     scrapp_latest_prices(arg)
     
     # Build the response returned to the user
@@ -264,9 +256,6 @@ def partial_ratio_1(x, y):
     return fuzz.partial_ratio(x, y, score_cutoff=1)
 
 # function to find the best match
-def unit(df):
-    return df[df['benchmark'] == df['benchmark'].max()].sort_values(by="price").iloc[[0]].reset_index(drop=True)
-
 def listing(df, budget, factor):
     return df[df['price'] < budget*factor].sort_values(by="price", ascending=False).reset_index(drop=True)
 
@@ -278,26 +267,26 @@ def compatibility(case, mb, rad, power, gpu, ram, budget):
     choice_rad = 0
 
     # Selecting motherboard with budget and memory type as constraints
-    while mb.at[choice_mb,"memory_type"] not in ram.at[0,"model"] \
-          or mb.at[choice_mb,"price"] > budget * 0.1:
+    while mb["memory_type"].iloc[choice_mb] not in ram["model"].iloc[0] \
+          or mb["price"].iloc[choice_mb] > budget * 0.1:
             choice_mb +=1
 
     # Selecting power supply with budget and gpu power usage as constraints
-    while power.at[choice_power,"power"] <  gpu.at[0,"power_usage"] \
-          or power.at[choice_power,"price"] > budget * 0.1:
+    while power["power"].iloc[choice_power] < gpu["power_usage"].iloc[0] \
+          or power["price"].iloc[choice_power] > budget * 0.1:
             choice_power +=1
 
     # Selecting cooling system with budget as constraint
     rad = rad.iloc[[choice_rad]]
 
     # Selecting case with budget, gpu length, rad length and motherboard type as constraints
-    while case.at[choice_case,"len_gpu_max"] <  rad.at[choice_rad,"largeur"] \
-          or case.at[choice_case,"len_gpu_max"] < gpu.at[0,"length"] \
-          or (mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb1"] \
-          and mb.at[choice_mb,"format"] != case.at[choice_case,"type_mb2"]):
+    while case["len_gpu_max"].iloc[choice_case] < rad["largeur"].iloc[choice_rad] \
+          or case["len_gpu_max"].iloc[choice_case] < gpu["length"].iloc[0]\
+          or (mb["format"].iloc[choice_mb] != case["type_mb1"].iloc[choice_case] \
+          and mb["format"].iloc[choice_mb] != case["type_mb2"].iloc[choice_case]):
             choice_case += 1 
     
-    return  mb.at[choice_power,"name"], \
-            power.at[choice_power,"name"], \
-            rad.at[choice_power,"name"], \
-            case.at[choice_power,"name"], 
+    return  mb["name"].iloc[choice_mb], \
+            power["name"].iloc[choice_power], \
+            rad["name"].iloc[choice_rad], \
+            case["name"].iloc[choice_case], 
