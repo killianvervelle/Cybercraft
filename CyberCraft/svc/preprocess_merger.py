@@ -21,7 +21,7 @@ class Merger:
         self.ssd_usr = pd.read_csv(path_usr_bench + "SSD.csv", encoding='latin-1')
         
     def normalize_column(self, column:pd.Series):
-        return (column-column.min())/(column.max()-column.min())    
+        return (column-column.min())/(column.max()-column.min())
     
     def merge_cpu(self):
         '''
