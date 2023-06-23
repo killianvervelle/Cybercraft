@@ -23,7 +23,7 @@ class QuotesSpider(scrapy.Spider):
     name = "spider"
     API_KEY = "4f4f5166-b931-4ffd-bb24-4bdf93ced0a5"
     SCRAPEOPS_PROXY_ENABLED = True
-    download_delay = random.randint(4, 10)
+    download_delay = random.randint(1, 3)
     LOG_LEVEL='DEBUG'
     
     def get_scrapeops_url(self, url):
@@ -37,7 +37,7 @@ class QuotesSpider(scrapy.Spider):
         print(urls)
         for url in urls:
             print("URL", url)
-            yield scrapy.Request(url=self.get_scrapeops_url(url), callback=self.discover_urlset_specs)
+            yield scrapy.Request(url=url, callback=self.discover_urlset_specs)
 
     """def start_requests(self):
         config = self.settings.get('arg')
