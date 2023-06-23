@@ -17,6 +17,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 logger = logging.getLogger("uvicorn.error")
 
+
 # Crawler Scrapy
 class QuotesSpider(scrapy.Spider):
     name = "spider"
