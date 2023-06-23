@@ -30,7 +30,8 @@ class PreProcess:
         # Get the model of the cpu
         re_core = r'\b(Core\s+i\d-\d+[a-zA-Z]*)\b'
         re_ryzen = r'\b(Ryzen\s+[0-9]\s+\w*\s*\d+\w*)\b'
-        self.cpu['model'] = self.cpu['designation'].str.extract(re_core).combine_first(self.cpu['designation'].str.extract(re_ryzen))
+        self.cpu['model'] = self.cpu['designation'].str.extract(re_core) \
+            .combine_first(self.cpu['designation'].str.extract(re_ryzen))
 
         # Get the socket of the cpu
         re_socket = r'\b[sS]ocket\s+(\w+)\b'
@@ -50,7 +51,7 @@ class PreProcess:
         re_model_nvidia = r'\b([GR]TX*\s+\d+\s*T*i*)\b'
         re_model_amd = r'\b(RX\s+\d+\s*X*T*X*)\b'
         self.gpu['model'] = self.gpu['description'].str.extract(re_model_nvidia) \
-             .combine_first(self.gpu['description'].str.extract(re_model_amd))
+            .combine_first(self.gpu['description'].str.extract(re_model_amd))
 
         # Get the memory of the gpu
         re_memory = r'^(\d+)\s*Go\b'

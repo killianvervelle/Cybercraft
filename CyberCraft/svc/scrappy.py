@@ -1,7 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 from urllib.parse import urljoin
 import scrapy.dupefilters
-import pandas as pd
 from scrapy_splash import SplashRequest
 import scrapy
 import random
